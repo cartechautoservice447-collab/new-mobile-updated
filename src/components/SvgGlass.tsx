@@ -137,7 +137,7 @@ export const SvgGlass: React.FC<SvgGlassProps> = ({
     if (!defs || gw < 2 || gh < 2) return;
 
     const heightFn = SURFACE_FNS[surfaceFn] || SURFACE_FNS.convex_squircle;
-    const clampedBezel = Math.max(1, Math.min(bezelWidth, br - 1, Math.min(gw, gh) / 2 - 1));
+    const clampedBezel = Math.min(bezelWidth, br - 1, Math.min(gw, gh) / 2 - 1);
 
     const profile = calculateRefractionProfile(
       glassThickness,
@@ -159,7 +159,7 @@ export const SvgGlass: React.FC<SvgGlassProps> = ({
     const filterId = `liquid-glass-filter-${filterRevRef.current}`;
 
     defs.innerHTML = `
-      <filter id="${filterId}" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <filter id="${filterId}" x="0%" y="0%" width="100%" height="100%">
         <feGaussianBlur in="SourceGraphic" stdDeviation="${blurAmount}" result="blurred_source" />
         <feImage href="${disp.dataUrl}" xlink:href="${disp.dataUrl}" x="0" y="0" width="${gw}" height="${gh}" result="disp_map" />
         <feDisplacementMap in="blurred_source" in2="disp_map"

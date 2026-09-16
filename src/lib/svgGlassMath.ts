@@ -28,7 +28,6 @@ export function calculateRefractionProfile(
   }
 
   const profile = new Float64Array(samples);
-  const safeBezel = Math.max(1, bezelWidth);
 
   for (let i = 0; i < samples; i++) {
     const x = i / samples;
@@ -43,7 +42,7 @@ export function calculateRefractionProfile(
       profile[i] = 0;
       continue;
     }
-    profile[i] = ref[0] * ((y * safeBezel + glassThickness) / ref[1]);
+    profile[i] = ref[0] * ((y * bezelWidth + glassThickness) / ref[1]);
   }
   return profile;
 }
@@ -67,9 +66,9 @@ export function generateDisplacementMap(
   const ctx = c.getContext('2d');
   const emptyImg = new ImageData(w, h);
   if (!ctx) return { dataUrl: '', imageData: emptyImg };
-
   const img = ctx.createImageData(w, h);
   const d = img.data;
+
   for (let i = 0; i < d.length; i += 4) {
     d[i] = 128;
     d[i + 1] = 128;
@@ -77,14 +76,13 @@ export function generateDisplacementMap(
     d[i + 3] = 255;
   }
 
-  const r = Math.min(radius, Math.floor(Math.min(w, h) / 2));
-  const rSq = r * r;
-  const r1Sq = (r + 1) ** 2;
-  const safeBezel = Math.max(1, Math.min(bezelWidth, r - 1));
-  const rBSq = Math.max(r - safeBezel, 0) ** 2;
-  const wB = Math.max(0, w - r * 2);
-  const hB = Math.max(0, h - r * 2);
-  const S = profile.length;
+  const r = radius,
+    rSq = r * r,
+    r1Sq = (r + 1) ** 2;
+  const rBSq = Math.max(r - bezelWidth, 0) ** 2;
+  const wB = w - r * 2,
+    hB = h - r * 2,
+    S = profile.length;
 
   for (let y1 = 0; y1 < h; y1++) {
     for (let x1 = 0; x1 < w; x1++) {
@@ -96,20 +94,24 @@ export function generateDisplacementMap(
       const dist = Math.sqrt(dSq);
       const fromSide = r - dist;
       const op = dSq < rSq ? 1 : 1 - (dist - Math.sqrt(rSq)) / (Math.sqrt(r1Sq) - Math.sqrt(rSq));
+
       if (op <= 0 || dist === 0) continue;
 
-      const cos = x / dist;
-      const sin = y / dist;
-      const bi = Math.min(Math.max(0, ((fromSide / safeBezel) * S) | 0), S - 1);
+      const cos = x / dist,
+        sin = y / dist;
+
+      const bi = Math.min(((fromSide / bezelWidth) * S) | 0, S - 1);
       const disp = profile[bi] || 0;
-      const safeMax = maxDisp || 1;
-      const dX = (-cos * disp) / safeMax;
-      const dY = (-sin * disp) / safeMax;
+
+      const dX = (-cos * disp) / maxDisp,
+        dY = (-sin * disp) / maxDisp;
+
       const idx = (y1 * w + x1) * 4;
-      d[idx] = Math.min(255, Math.max(0, (128 + dX * 127 * op + 0.5) | 0));
-      d[idx + 1] = Math.min(255, Math.max(0, (128 + dY * 127 * op + 0.5) | 0));
+      d[idx] = (128 + dX * 127 * op + 0.5) | 0;
+      d[idx + 1] = (128 + dY * 127 * op + 0.5) | 0;
     }
   }
+
   ctx.putImageData(img, 0, 0);
   return { dataUrl: c.toDataURL(), imageData: img };
 }
@@ -127,18 +129,16 @@ export function generateSpecularMap(
   const ctx = c.getContext('2d');
   const emptyImg = new ImageData(w, h);
   if (!ctx) return { dataUrl: '', imageData: emptyImg };
-
   const img = ctx.createImageData(w, h);
   const d = img.data;
   d.fill(0);
 
-  const r = Math.min(radius, Math.floor(Math.min(w, h) / 2));
-  const rSq = r * r;
-  const r1Sq = (r + 1) ** 2;
-  const safeBezel = Math.max(1, Math.min(bezelWidth, r - 1));
-  const rBSq = Math.max(r - safeBezel, 0) ** 2;
-  const wB = Math.max(0, w - r * 2);
-  const hB = Math.max(0, h - r * 2);
+  const r = radius,
+    rSq = r * r,
+    r1Sq = (r + 1) ** 2;
+  const rBSq = Math.max(r - bezelWidth, 0) ** 2;
+  const wB = w - r * 2,
+    hB = h - r * 2;
   const sv = [Math.cos(angle), Math.sin(angle)];
 
   for (let y1 = 0; y1 < h; y1++) {
@@ -153,13 +153,15 @@ export function generateSpecularMap(
       const op = dSq < rSq ? 1 : 1 - (dist - Math.sqrt(rSq)) / (Math.sqrt(r1Sq) - Math.sqrt(rSq));
       if (op <= 0 || dist === 0) continue;
 
-      const cos = x / dist;
-      const sin = -y / dist;
+      const cos = x / dist,
+        sin = -y / dist;
       const dot = Math.abs(cos * sv[0] + sin * sv[1]);
-      const edge = Math.sqrt(Math.max(0, 1 - (1 - Math.min(1, fromSide / safeBezel)) ** 2));
+
+      const edge = Math.sqrt(Math.max(0, 1 - (1 - fromSide) ** 2));
       const coeff = dot * edge;
-      const col = Math.min(255, (255 * coeff) | 0);
-      const alpha = Math.min(255, (col * coeff * op) | 0);
+      const col = (255 * coeff) | 0;
+      const alpha = (col * coeff * op) | 0;
+
       const idx = (y1 * w + x1) * 4;
       d[idx] = col;
       d[idx + 1] = col;
@@ -167,6 +169,7 @@ export function generateSpecularMap(
       d[idx + 3] = alpha;
     }
   }
+
   ctx.putImageData(img, 0, 0);
   return { dataUrl: c.toDataURL(), imageData: img };
 }
@@ -202,7 +205,6 @@ export function renderRefractedBackgroundSlice(
   const vh = window.innerHeight;
   const imgAspect = bgImg.naturalWidth / bgImg.naturalHeight;
   const screenAspect = vw / vh;
-
   let bgW = vw;
   let bgH = vh;
   let offX = 0;
@@ -232,8 +234,8 @@ export function renderRefractedBackgroundSlice(
   const sH = (glassH / bgH) * bgImg.naturalHeight;
 
   offCtx.drawImage(bgImg, sX, sY, sW, sH, 0, 0, glassW, glassH);
-
   const srcImgData = offCtx.getImageData(0, 0, glassW, glassH);
+
   const src = srcImgData.data;
   const disp = dispData.data;
   const spec = specData.data;
@@ -244,6 +246,7 @@ export function renderRefractedBackgroundSlice(
   for (let y = 0; y < glassH; y++) {
     for (let x = 0; x < glassW; x++) {
       const idx = (y * glassW + x) * 4;
+
       const rVal = disp[idx];
       const gVal = disp[idx + 1];
 
@@ -274,7 +277,5 @@ export function renderRefractedBackgroundSlice(
       out[idx + 3] = 255;
     }
   }
-
   ctx.putImageData(outImgData, 0, 0);
 }
-
