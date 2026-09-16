@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { exactStudioVertexShader, exactStudioFragmentShader } from '../../shaders/exactLiquidGlassShader';
 import { isOrbScene, isWhiteOrbScene, isDarkOrbScene } from '../../data/backgroundTemplates';
+import { PerformanceMode } from '../../types/studio';
 
 export interface GlassBoxDescriptor {
   id: string;
@@ -25,6 +26,7 @@ interface StudioWebGLBackgroundProps {
     tint?: number;
     shadow?: number;
   };
+  performanceMode?: PerformanceMode;
 }
 
 export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
@@ -39,10 +41,14 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
     tint: 0.08,
     shadow: 0.5,
   },
+  performanceMode = 'ultra',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const currentBgRef = useRef(currentBg);
   currentBgRef.current = currentBg;
+
+  const performanceModeRef = useRef<PerformanceMode>(performanceMode);
+  performanceModeRef.current = performanceMode;
 
   const threeRef = useRef<{
     renderer: THREE.WebGLRenderer;
@@ -86,7 +92,11 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
       return;
     }
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    const isUltraInit = performanceModeRef.current === 'ultra';
+    const initialPixelRatio = isUltraInit ? Math.min(window.devicePixelRatio || 1, 2) : 1.0;
+    const initialRtScale = isUltraInit ? 1.0 : 0.75;
+
+    renderer.setPixelRatio(initialPixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     // --- BACKGROUND SCENE (Orbs + Void + Wall) ---
@@ -195,11 +205,15 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
     // Apply theme according to current initial background
     updateOrbTheme(isWhiteOrbScene(currentBgRef.current));
 
-    const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      format: THREE.RGBAFormat,
-    });
+    const renderTarget = new THREE.WebGLRenderTarget(
+      Math.max(1, Math.round(window.innerWidth * initialRtScale)),
+      Math.max(1, Math.round(window.innerHeight * initialRtScale)),
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat,
+      }
+    );
 
     // --- FOREGROUND SCENE (Glass Shader) ---
     const fgScene = new THREE.Scene();
@@ -332,9 +346,16 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
     const handleResize = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
+      const isUltra = performanceModeRef.current === 'ultra';
+      const targetPixelRatio = isUltra ? Math.min(window.devicePixelRatio || 1, 2) : 1.0;
+      const targetRtScale = isUltra ? 1.0 : 0.75;
+
       renderer.setSize(w, h);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      threeRef.current?.renderTarget.setSize(w, h);
+      renderer.setPixelRatio(targetPixelRatio);
+      threeRef.current?.renderTarget.setSize(
+        Math.max(1, Math.round(w * targetRtScale)),
+        Math.max(1, Math.round(h * targetRtScale))
+      );
       
       if (threeRef.current) {
         threeRef.current.material.uniforms.uResolution.value.set(w, h);
@@ -421,6 +442,23 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
       isCurrent = false;
     };
   }, [currentBg]);
+
+  // Dynamically update renderer pixel ratio and render target resolution when performanceMode changes
+  useEffect(() => {
+    if (!threeRef.current) return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const isUltra = performanceMode === 'ultra';
+    const targetPixelRatio = isUltra ? Math.min(window.devicePixelRatio || 1, 2) : 1.0;
+    const targetRtScale = isUltra ? 1.0 : 0.75;
+
+    threeRef.current.renderer.setPixelRatio(targetPixelRatio);
+    threeRef.current.renderer.setSize(w, h);
+    threeRef.current.renderTarget.setSize(
+      Math.max(1, Math.round(w * targetRtScale)),
+      Math.max(1, Math.round(h * targetRtScale))
+    );
+  }, [performanceMode]);
 
   return (
     <canvas

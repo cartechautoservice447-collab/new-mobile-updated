@@ -542,6 +542,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
           tint: glParams?.tint ?? 0.08,
           shadow: glParams?.shadow ?? 0.5,
         }}
+        performanceMode={performanceMode}
       />
 
       {/* 3. Main Studio View Content Container - Deep Vertically Scrollable Workspace */}
