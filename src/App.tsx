@@ -171,7 +171,6 @@ export default function App() {
           threeRef.current.bgTexture = tex;
           if (!isOrbScene(currentBgRef.current)) {
             threeRef.current.material.uniforms.uBgTex.value = tex;
-            threeRef.current.material.uniforms.uRenderBg.value = 0.0;
             if (tex.image && tex.image.width && tex.image.height) {
               threeRef.current.material.uniforms.uBgAspect.value =
                 tex.image.width / tex.image.height;
@@ -313,7 +312,6 @@ export default function App() {
         uSpecular: { value: glState.spec },
         uTint: { value: glState.tint },
         uShadow: { value: glState.shadow },
-        uRenderBg: { value: isCurrentOrb ? 1.0 : 0.0 },
         uBgTex: { value: isCurrentOrb ? renderTarget.texture : null },
         uBgAspect: { value: window.innerWidth / window.innerHeight },
       },
@@ -338,7 +336,13 @@ export default function App() {
       }
 
       renderer.setRenderTarget(null);
+      renderer.autoClear = false;
+      renderer.clear();
+      if (isOrb) {
+        renderer.render(bgScene, bgCamera);
+      }
       renderer.render(scene, camera);
+      renderer.autoClear = true;
       animId = requestAnimationFrame(renderLoop);
     };
 
@@ -417,11 +421,9 @@ export default function App() {
     if (mode === 'webgl' && threeRef.current) {
       if (isOrbScene(currentBg)) {
         threeRef.current.updateOrbTheme(isWhiteOrbScene(currentBg));
-        threeRef.current.material.uniforms.uRenderBg.value = 1.0;
         threeRef.current.material.uniforms.uBgTex.value = threeRef.current.renderTarget.texture;
         threeRef.current.material.uniforms.uBgAspect.value = window.innerWidth / window.innerHeight;
       } else {
-        threeRef.current.material.uniforms.uRenderBg.value = 0.0;
         loadBgTexture(currentBg);
       }
     }

@@ -23,7 +23,6 @@ uniform float uTint;
 uniform float uShadow;
 uniform sampler2D uBgTex;
 uniform float uBgAspect;
-uniform float uRenderBg;
 
 float sdRoundedRect(vec2 p, vec2 halfSize, float r) {
   vec2 q = abs(p) - halfSize + r;
@@ -86,13 +85,7 @@ void main() {
   if (sd > 0.0) {
     float shadowFalloff = exp(-sd * sd / 800.0);
     float shadowAlpha = uShadow * shadowFalloff * 0.6;
-    if (uRenderBg > 0.5) {
-      vec3 bgColor = sampleBg(screenPx / uResolution);
-      bgColor = mix(bgColor, vec3(0.0), shadowAlpha);
-      gl_FragColor = vec4(bgColor, 1.0);
-    } else {
-      gl_FragColor = vec4(0.0, 0.0, 0.0, shadowAlpha);
-    }
+    gl_FragColor = vec4(0.0, 0.0, 0.0, shadowAlpha);
     return;
   }
 
