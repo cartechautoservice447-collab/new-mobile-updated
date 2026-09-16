@@ -60,10 +60,16 @@ export default function App() {
       const path = window.location.pathname;
       const search = window.location.search;
       const hash = window.location.hash;
-      if (path.includes('/studio') || hash.includes('studio') || search.includes('studio')) {
-        setViewMode('studio');
-      } else {
-        setViewMode('classic');
+      const nextMode: 'classic' | 'studio' =
+        path.includes('/studio') || hash.includes('studio') || search.includes('studio')
+          ? 'studio'
+          : 'classic';
+
+      setViewMode(nextMode);
+      try {
+        localStorage.setItem('liquid-glass-view-mode', nextMode);
+      } catch (err) {
+        console.warn('Failed to update localStorage on popstate:', err);
       }
     };
 
