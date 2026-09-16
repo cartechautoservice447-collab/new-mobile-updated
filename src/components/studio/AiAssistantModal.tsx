@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Sparkles, Send, Lightbulb, Code2, BookOpen, Bot } from 'lucide-react';
 
 interface AiAssistantModalProps {
@@ -14,6 +14,16 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
       text: 'Hello! I am your Liquid Glass Studio AI study copilot. How can I assist you with your CS50 Python, Mobile Application, or WebGL Three.js courses today?',
     },
   ]);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -24,8 +34,12 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
     setMessages((prev) => [...prev, { sender: 'user', text }]);
     setPrompt('');
 
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
     // Generate intelligent academic feedback
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       let aiResponse = '';
       if (text.toLowerCase().includes('python') || text.toLowerCase().includes('cs50')) {
         aiResponse =
@@ -42,9 +56,15 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-black/70 backdrop-blur-md animate-fade-in">
+    <div
+      id="ai-assistant-modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 backdrop-blur-md animate-fade-in"
+    >
       <div
-        className="relative w-full max-w-2xl rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden flex flex-col h-[75vh]"
+        className="relative w-full max-w-2xl rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden flex flex-col h-[85vh] sm:h-[75vh]"
         style={{
           background: 'linear-gradient(135deg, rgba(25, 20, 50, 0.95) 0%, rgba(12, 16, 32, 0.98) 100%)',
           backdropFilter: 'blur(35px)',
@@ -52,26 +72,26 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
-          <div className="flex items-center gap-3">
-            <span className="p-2 rounded-xl bg-purple-500/20 border border-purple-400/30 text-purple-300">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10 bg-white/5">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <span className="p-2 rounded-xl bg-purple-500/20 border border-purple-400/30 text-purple-300 shrink-0">
               <Sparkles className="w-5 h-5" />
             </span>
-            <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">AI Studio Assistant</h2>
-              <p className="text-xs text-slate-400">Context-aware academic synthesis & coding tutor</p>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">AI Studio Assistant</h2>
+              <p className="text-xs text-slate-400 truncate">Context-aware academic synthesis & coding tutor</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors"
+            className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors shrink-0 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Chat History */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-3.5 sm:space-y-4">
           {messages.map((m, i) => (
             <div
               key={i}

@@ -112,7 +112,7 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
             exit={{ opacity: 0, scale: 0.94, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             id="add-course-glass-modal"
-            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[48px] sm:rounded-[56px] md:rounded-[64px] p-8 sm:p-10 md:p-12 shadow-2xl text-white border border-white/20 z-10"
+            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] sm:rounded-[56px] md:rounded-[64px] p-5 sm:p-8 md:p-12 shadow-2xl text-white border border-white/20 z-10"
             style={{
               background: isLightBg
                 ? 'linear-gradient(135deg, rgba(20, 25, 45, 0.95) 0%, rgba(12, 16, 32, 0.98) 100%)'
@@ -310,18 +310,18 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 border-t border-white/10 pt-5 mt-2">
+              <div className="flex flex-wrap items-center justify-end gap-2.5 sm:gap-3 border-t border-white/10 pt-5 mt-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-3 rounded-[22px] bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white text-xs font-semibold cursor-pointer transition-all border border-white/10"
+                  className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 rounded-[20px] sm:rounded-[22px] bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white text-xs font-semibold cursor-pointer transition-all border border-white/10 text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   id="confirm-create-course-btn"
-                  className="px-8 py-3.5 rounded-[24px] bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-500/25 flex items-center gap-2 active:scale-95"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-3.5 rounded-[20px] sm:rounded-[24px] bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-95"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Confirm & Create Course</span>

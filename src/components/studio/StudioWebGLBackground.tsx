@@ -108,6 +108,8 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
     const orbGroup = new THREE.Group();
     bgScene.add(orbGroup);
     const orbMeshes: THREE.Mesh[] = [];
+    const orbGeometries: THREE.SphereGeometry[] = [];
+    const orbMaterials: THREE.MeshPhysicalMaterial[] = [];
     
     const createOrb = (color: string, x: number, y: number, z: number, size: number) => {
       const geo = new THREE.SphereGeometry(size, 64, 64);
@@ -120,8 +122,12 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
         clearcoat: 1.0, 
         clearcoatRoughness: 0.1
       });
+      orbGeometries.push(geo);
+      orbMaterials.push(mat);
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(x, y, z);
+      // Store immutable base coordinates to ensure deterministic, bounded animation without drift
+      mesh.userData = { baseX: x, baseY: y, baseZ: z };
       orbGroup.add(mesh);
       orbMeshes.push(mesh);
       return mesh;
@@ -233,7 +239,8 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
       depthTest: false,
     });
 
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+    const fgPlaneGeo = new THREE.PlaneGeometry(2, 2);
+    const mesh = new THREE.Mesh(fgPlaneGeo, material);
     fgScene.add(mesh);
 
     const threeObj = {
@@ -255,30 +262,6 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
     };
     threeRef.current = threeObj;
 
-    // If initial background is an image, load it
-    if (!isCurrentOrb && currentBgRef.current) {
-      new THREE.TextureLoader().load(
-        currentBgRef.current,
-        (tex) => {
-          tex.minFilter = THREE.LinearFilter;
-          tex.magFilter = THREE.LinearFilter;
-          if (threeRef.current) {
-            threeRef.current.loadedImgTexture = tex;
-            if (!isOrbScene(currentBgRef.current)) {
-              threeRef.current.material.uniforms.uBgTex.value = tex;
-              threeRef.current.material.uniforms.uRenderBg.value = 0.0;
-              if (tex.image && tex.image.width && tex.image.height) {
-                threeRef.current.material.uniforms.uBgAspect.value =
-                  tex.image.width / tex.image.height;
-              }
-            }
-          }
-        },
-        undefined,
-        (err) => console.warn('Texture load error:', err)
-      );
-    }
-
     // Render loop tracking real element bounding boxes
     const renderLoop = (time: number) => {
       if (!threeRef.current) return;
@@ -286,10 +269,14 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
       const isOrb = isOrbScene(currentBgRef.current);
 
       if (isOrb) {
-        // Animate Orbs
+        // Animate Orbs deterministically from immutable base coordinates (bounded, zero progressive drift)
         threeRef.current.orbGroup.children.forEach((child, i) => {
-          child.position.y += Math.sin(time * 0.001 + i) * 0.01;
-          child.position.x += Math.cos(time * 0.0012 + i) * 0.005;
+          const base = child.userData as { baseX: number; baseY: number; baseZ: number };
+          if (base && typeof base.baseX === 'number') {
+            child.position.x = base.baseX + Math.cos(time * 0.0012 + i) * 0.25;
+            child.position.y = base.baseY + Math.sin(time * 0.001 + i) * 0.4;
+            child.position.z = base.baseZ;
+          }
         });
 
         // 1. Render the background scene to the render target
@@ -365,7 +352,15 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
       window.removeEventListener('resize', handleResize);
       if (threeObj.rafId) cancelAnimationFrame(threeObj.rafId);
       threeObj.renderTarget.dispose();
-      if (threeObj.loadedImgTexture) threeObj.loadedImgTexture.dispose();
+      if (threeObj.loadedImgTexture) {
+        threeObj.loadedImgTexture.dispose();
+        threeObj.loadedImgTexture = null;
+      }
+      wallGeo.dispose();
+      wallMat.dispose();
+      orbGeometries.forEach((g) => g.dispose());
+      orbMaterials.forEach((m) => m.dispose());
+      fgPlaneGeo.dispose();
       material.dispose();
       renderer.dispose();
       threeRef.current = null;
@@ -374,6 +369,7 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
 
   // Dynamically update background when currentBg prop changes
   useEffect(() => {
+    let isCurrent = true;
     if (!threeRef.current) return;
 
     if (isOrbScene(currentBg)) {
@@ -381,32 +377,49 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
       threeRef.current.material.uniforms.uRenderBg.value = 1.0;
       threeRef.current.material.uniforms.uBgTex.value = threeRef.current.renderTarget.texture;
       threeRef.current.material.uniforms.uBgAspect.value = window.innerWidth / window.innerHeight;
-    } else {
+      if (threeRef.current.loadedImgTexture) {
+        threeRef.current.loadedImgTexture.dispose();
+        threeRef.current.loadedImgTexture = null;
+      }
+    } else if (currentBg) {
       threeRef.current.material.uniforms.uRenderBg.value = 0.0;
       new THREE.TextureLoader().load(
         currentBg,
         (tex) => {
+          if (!isCurrent || !threeRef.current) {
+            tex.dispose();
+            return;
+          }
           tex.minFilter = THREE.LinearFilter;
           tex.magFilter = THREE.LinearFilter;
-          if (threeRef.current) {
-            if (threeRef.current.loadedImgTexture) {
-              threeRef.current.loadedImgTexture.dispose();
-            }
-            threeRef.current.loadedImgTexture = tex;
-            if (!isOrbScene(currentBgRef.current)) {
-              threeRef.current.material.uniforms.uBgTex.value = tex;
-              threeRef.current.material.uniforms.uRenderBg.value = 0.0;
-              if (tex.image && tex.image.width && tex.image.height) {
-                threeRef.current.material.uniforms.uBgAspect.value =
-                  tex.image.width / tex.image.height;
-              }
+          tex.wrapS = THREE.ClampToEdgeWrapping;
+          tex.wrapT = THREE.ClampToEdgeWrapping;
+          tex.generateMipmaps = false;
+          
+          if (threeRef.current.loadedImgTexture && threeRef.current.loadedImgTexture !== tex) {
+            threeRef.current.loadedImgTexture.dispose();
+          }
+          threeRef.current.loadedImgTexture = tex;
+          
+          if (!isOrbScene(currentBgRef.current)) {
+            threeRef.current.material.uniforms.uBgTex.value = tex;
+            threeRef.current.material.uniforms.uRenderBg.value = 0.0;
+            if (tex.image && tex.image.width && tex.image.height) {
+              threeRef.current.material.uniforms.uBgAspect.value =
+                tex.image.width / tex.image.height;
             }
           }
         },
         undefined,
-        (err) => console.warn('Texture load error:', err)
+        (err) => {
+          console.warn('Background texture failed to load safely:', err);
+        }
       );
     }
+
+    return () => {
+      isCurrent = false;
+    };
   }, [currentBg]);
 
   return (

@@ -8,6 +8,7 @@ class FocusAudioEngine {
   private currentType: string | null = null;
   private isMuted: boolean = false;
   private volume: number = 0.5;
+  private stopTimeout: NodeJS.Timeout | null = null;
 
   private initContext() {
     if (!this.ctx) {
@@ -38,24 +39,33 @@ class FocusAudioEngine {
     return this.isMuted;
   }
 
+  private cleanupActiveNodes() {
+    this.activeSourceNodes.forEach((node) => {
+      if (typeof node === 'number') {
+        clearInterval(node);
+      } else {
+        try {
+          (node as AudioScheduledSourceNode).stop?.();
+          node.disconnect();
+        } catch {}
+      }
+    });
+    this.activeSourceNodes = [];
+    this.ambientGain = null;
+    this.currentType = null;
+  }
+
   public stopAmbient() {
+    if (this.stopTimeout) {
+      clearTimeout(this.stopTimeout);
+      this.stopTimeout = null;
+    }
     if (this.ambientGain && this.ctx) {
       this.ambientGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
     }
-    setTimeout(() => {
-      this.activeSourceNodes.forEach((node) => {
-        if (typeof node === 'number') {
-          clearInterval(node);
-        } else {
-          try {
-            (node as AudioScheduledSourceNode).stop?.();
-            node.disconnect();
-          } catch {}
-        }
-      });
-      this.activeSourceNodes = [];
-      this.ambientGain = null;
-      this.currentType = null;
+    this.stopTimeout = setTimeout(() => {
+      this.cleanupActiveNodes();
+      this.stopTimeout = null;
     }, 150);
   }
 
@@ -64,7 +74,14 @@ class FocusAudioEngine {
     if (!this.ctx) return;
 
     if (this.currentType === type) return;
-    this.stopAmbient();
+
+    if (this.stopTimeout) {
+      clearTimeout(this.stopTimeout);
+      this.stopTimeout = null;
+      this.cleanupActiveNodes();
+    } else {
+      this.stopAmbient();
+    }
     this.currentType = type;
 
     const gain = this.ctx.createGain();

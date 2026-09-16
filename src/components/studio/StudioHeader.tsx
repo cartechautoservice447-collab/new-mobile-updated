@@ -66,24 +66,24 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
       </div>
 
       {/* Right Controls Bar - Organized in premium functional clusters */}
-      <div className="flex flex-wrap items-center gap-3.5 self-stretch lg:self-auto justify-start lg:justify-end">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3.5 self-stretch lg:self-auto justify-start lg:justify-end max-w-full">
         {/* Navigation & Intelligence Cluster */}
-        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/20 border border-white/10 shadow-inner">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-black/20 border border-white/10 shadow-inner max-w-full">
           {/* Return to Classic View Button */}
           <button
             onClick={onReturnToClassic}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white tracking-tight transition-all active:scale-95 shadow-md cursor-pointer"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white tracking-tight transition-all active:scale-95 shadow-md cursor-pointer"
             title="Return to Classic View"
             id="btn-return-classic-header"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Classic View</span>
           </button>
 
           {/* AI Intelligence Trigger */}
           <button
             onClick={onOpenAiSparkle}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600/40 to-purple-600/40 hover:from-blue-600/60 hover:to-purple-600/60 border border-white/20 text-xs font-semibold text-white transition-all active:scale-95 cursor-pointer shadow-md"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-blue-600/40 to-purple-600/40 hover:from-blue-600/60 hover:to-purple-600/60 border border-white/20 text-xs font-semibold text-white transition-all active:scale-95 cursor-pointer shadow-md"
             title="Open AI Studio Intelligence"
           >
             <Sparkles className="w-3.5 h-3.5 text-cyan-300 fill-cyan-300/30" />
@@ -92,17 +92,17 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
         </div>
 
         {/* System & Telemetry Cluster */}
-        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/20 border border-white/10 shadow-inner">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-black/20 border border-white/10 shadow-inner max-w-full">
           {/* Performance Selector Pill */}
           <div
-            className="flex items-center gap-1.5 px-2 py-1"
+            className="flex items-center gap-1 sm:gap-1.5 px-1 sm:px-2 py-0.5 sm:py-1"
             id="performance-selector"
           >
             <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 hidden sm:inline" />
             <div className="flex items-center bg-black/40 rounded-xl p-0.5 border border-white/10">
               <button
                 onClick={() => onTogglePerformance('high')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   performanceMode === 'high'
                     ? 'bg-white/25 text-white shadow-md'
                     : 'text-slate-400 hover:text-white'
@@ -112,7 +112,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
               </button>
               <button
                 onClick={() => onTogglePerformance('ultra')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   performanceMode === 'ultra'
                     ? 'bg-white/25 text-white shadow-md'
                     : 'text-slate-400 hover:text-white'
@@ -128,25 +128,25 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           {/* Theme Toggle */}
           <button
             onClick={onToggleTheme}
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/15 text-slate-200 hover:text-white transition-all active:scale-95 cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/15 text-slate-200 hover:text-white transition-all active:scale-95 cursor-pointer shrink-0"
             title="Toggle Light / Dark Ambient Theme"
           >
-            {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDarkTheme ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </button>
 
           {/* Settings button */}
           <button
             onClick={onOpenSettings}
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/15 text-slate-200 hover:text-white transition-all active:scale-95 cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/15 text-slate-200 hover:text-white transition-all active:scale-95 cursor-pointer shrink-0"
             title="Studio Settings & Background Showcases"
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
           {/* User profile button */}
           <button
             onClick={onOpenProfile}
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-tr from-blue-600 to-purple-600 border border-white/30 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer hover:ring-2 hover:ring-white/40"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center bg-gradient-to-tr from-blue-600 to-purple-600 border border-white/30 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer hover:ring-2 hover:ring-white/40 shrink-0"
             title="Amith Krishna - Account Profile"
           >
             AK

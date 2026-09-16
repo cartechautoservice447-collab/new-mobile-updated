@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   BookOpen,
   History,
@@ -33,6 +33,8 @@ import {
   isOrbScene,
   isDarkOrbScene,
   isWhiteOrbScene,
+  DEEP_BLACK_ORBS_URL,
+  STUDIO_WHITE_ORBS_URL,
 } from '../../data/backgroundTemplates';
 import { StudioHeader } from './StudioHeader';
 import { StudioBottomDock, DockTab } from './StudioBottomDock';
@@ -43,6 +45,51 @@ import { CourseDetailModal } from './CourseDetailModal';
 import { AiAssistantModal } from './AiAssistantModal';
 import { AddCourseModal } from './AddCourseModal';
 import { StudioWebGLBackground, GlassBoxDescriptor } from './StudioWebGLBackground';
+
+// Dedicated localStorage key for persisting user-created courses
+const CREATED_COURSES_STORAGE_KEY = 'liquid-glass-studio-created-courses';
+
+const isValidCourseFolder = (item: unknown): item is CourseFolder => {
+  if (!item || typeof item !== 'object') return false;
+  const c = item as Record<string, unknown>;
+  return (
+    typeof c.id === 'string' &&
+    c.id.length > 0 &&
+    typeof c.title === 'string' &&
+    typeof c.number === 'string' &&
+    typeof c.instructor === 'string' &&
+    typeof c.description === 'string' &&
+    typeof c.color === 'string' &&
+    typeof c.progress === 'number' &&
+    typeof c.noteCount === 'number' &&
+    Array.isArray(c.notes)
+  );
+};
+
+const loadPersistedCreatedCourses = (): CourseFolder[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(CREATED_COURSES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const builtInIds = new Set(COURSES_DATA.map((c) => c.id));
+    return parsed.filter((item): item is CourseFolder => isValidCourseFolder(item) && !builtInIds.has(item.id));
+  } catch {
+    return [];
+  }
+};
+
+const savePersistedCreatedCourses = (coursesToSave: CourseFolder[]) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const builtInIds = new Set(COURSES_DATA.map((c) => c.id));
+    const onlyUserCreated = coursesToSave.filter((c) => !builtInIds.has(c.id));
+    localStorage.setItem(CREATED_COURSES_STORAGE_KEY, JSON.stringify(onlyUserCreated));
+  } catch (err) {
+    console.warn('Failed to save created courses to localStorage:', err);
+  }
+};
 
 export interface StudioViewProps {
   currentBg: string;
@@ -85,18 +132,43 @@ export const StudioView: React.FC<StudioViewProps> = ({
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseFolder | null>(null);
   const [isAddCourseModalOpen, setIsAddCourseModalOpen] = useState(false);
-  const [courses, setCourses] = useState<CourseFolder[]>(COURSES_DATA);
-  const [userCreatedCourseIds, setUserCreatedCourseIds] = useState<string[]>([]);
+  // User-created courses with localStorage persistence
+  const [createdCourses, setCreatedCourses] = useState<CourseFolder[]>(() => {
+    return loadPersistedCreatedCourses();
+  });
+
+  // Reconstruct full course list: user-created courses + built-in COURSES_DATA
+  const courses = useMemo(() => {
+    return [...createdCourses, ...COURSES_DATA];
+  }, [createdCourses]);
+
+  const userCreatedCourseIds = useMemo(() => {
+    return createdCourses.map((c) => c.id);
+  }, [createdCourses]);
 
   const handleAddNewCourse = (newCourse: CourseFolder) => {
-    setCourses((prev) => [newCourse, ...prev]);
-    setUserCreatedCourseIds((prev) => [newCourse.id, ...prev]);
+    setCreatedCourses((prev) => {
+      const next = [newCourse, ...prev.filter((c) => c.id !== newCourse.id)];
+      savePersistedCreatedCourses(next);
+      return next;
+    });
   };
 
   const handleDeleteCreatedCourse = (courseId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setCourses((prev) => prev.filter((c) => c.id !== courseId));
-    setUserCreatedCourseIds((prev) => prev.filter((id) => id !== courseId));
+    // Built-in courses cannot be deleted
+    const builtInIds = new Set(COURSES_DATA.map((c) => c.id));
+    if (builtInIds.has(courseId)) return;
+
+    if (selectedCourse?.id === courseId) {
+      setSelectedCourse(null);
+    }
+
+    setCreatedCourses((prev) => {
+      const next = prev.filter((c) => c.id !== courseId);
+      savePersistedCreatedCourses(next);
+      return next;
+    });
   };
 
   // Settings & Profile
@@ -140,17 +212,27 @@ export const StudioView: React.FC<StudioViewProps> = ({
     } catch {}
   };
 
-  // Get real DOM bounding boxes for WebGL multi-box exact liquid glass shader
-  // Automatically filters elements that are visible in the viewport during vertical scrolling
-  const getBoxDescriptors = (): GlassBoxDescriptor[] => {
+  // Cached bounding box descriptors for WebGL multi-box exact liquid glass shader
+  const cachedBoxesRef = useRef<GlassBoxDescriptor[]>([]);
+  const isGeometryDirtyRef = useRef<boolean>(true);
+  const lastScrollTopRef = useRef<number>(-1);
+  const lastScrollLeftRef = useRef<number>(-1);
+  const lastWinScrollYRef = useRef<number>(-1);
+  const lastWinScrollXRef = useRef<number>(-1);
+
+  // Recalculates cached bounding boxes for visible elements in the viewport.
+  // Called ONLY on mount, scroll, resize, ResizeObserver size changes, or relevant layout state changes.
+  const measureAndCacheBoxes = useCallback(() => {
     const list: GlassBoxDescriptor[] = [];
+    const winHeight = typeof window !== 'undefined' ? window.innerHeight : 1000;
+
     const pushBox = (id: string, el: HTMLElement | null, r: number, bezelRadius: number = 45) => {
       if (!el) return;
       const rect = el.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return;
 
       // Only pass boxes that are inside or near the viewport (-100 to window.innerHeight + 100)
-      if (rect.bottom < -100 || rect.top > window.innerHeight + 100) {
+      if (rect.bottom < -100 || rect.top > winHeight + 100) {
         return;
       }
 
@@ -178,21 +260,234 @@ export const StudioView: React.FC<StudioViewProps> = ({
     pushBox('optics', opticsCardRef.current, 38, 55);
     pushBox('dock', dockRef.current, 56, 65);
 
-    return list;
-  };
+    cachedBoxesRef.current = list;
+    isGeometryDirtyRef.current = false;
 
-  const handleSelectTab = (tab: DockTab) => {
-    setActiveTab(tab);
-    if (tab === 'courses') {
-      setSelectedCourse(COURSES_DATA[0]);
-    } else if (tab === 'notes') {
-      setSelectedCourse(COURSES_DATA[0]);
-    } else if (tab === 'collections') {
-      setIsOverviewOpen(true);
-    } else if (tab === 'more') {
-      setIsAiModalOpen(true);
+    // Record last scroll positions for zero-overhead change detection
+    if (containerRef.current) {
+      lastScrollTopRef.current = containerRef.current.scrollTop;
+      lastScrollLeftRef.current = containerRef.current.scrollLeft;
     }
-  };
+    if (typeof window !== 'undefined') {
+      lastWinScrollYRef.current = window.scrollY;
+      lastWinScrollXRef.current = window.scrollX;
+    }
+  }, []);
+
+  // Set up listeners and observers for geometry cache updates
+  useEffect(() => {
+    // Initial measurement on mount
+    measureAndCacheBoxes();
+
+    // Additional rAF measurement after mount to ensure layout is settled and painted
+    const rafId = requestAnimationFrame(() => {
+      measureAndCacheBoxes();
+    });
+
+    const scrollContainer = containerRef.current;
+    const handleScroll = () => {
+      measureAndCacheBoxes();
+    };
+
+    const handleResize = () => {
+      measureAndCacheBoxes();
+    };
+
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
+
+    // Observe size changes of tracked elements with ResizeObserver
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        measureAndCacheBoxes();
+      });
+
+      const elementsToObserve = [
+        scrollContainer,
+        bannerRef.current,
+        showcaseBarRef.current,
+        toolCard1Ref.current,
+        toolCard2Ref.current,
+        toolCard3Ref.current,
+        workspaceCardRef.current,
+        analyticsCardRef.current,
+        timelineCardRef.current,
+        addNewCourseBarRef.current,
+        createdCoursesSectionRef.current,
+        opticsCardRef.current,
+        dockRef.current,
+      ];
+
+      elementsToObserve.forEach((el) => {
+        if (el) resizeObserver!.observe(el);
+      });
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+  }, [measureAndCacheBoxes]);
+
+  // Global Escape key listener to close topmost active modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isAiModalOpen) {
+          setIsAiModalOpen(false);
+        } else if (profileOpen) {
+          setProfileOpen(false);
+        } else if (settingsOpen) {
+          setSettingsOpen(false);
+        } else if (isAddCourseModalOpen) {
+          setIsAddCourseModalOpen(false);
+        } else if (selectedCourse) {
+          setSelectedCourse(null);
+        } else if (isStudyHubOpen) {
+          setIsStudyHubOpen(false);
+        } else if (isPomodoroOpen) {
+          setIsPomodoroOpen(false);
+        } else if (isOverviewOpen) {
+          setIsOverviewOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isAiModalOpen,
+    profileOpen,
+    settingsOpen,
+    isAddCourseModalOpen,
+    selectedCourse,
+    isStudyHubOpen,
+    isPomodoroOpen,
+    isOverviewOpen,
+  ]);
+
+  // Recalculate geometry when relevant layout state changes
+  useEffect(() => {
+    measureAndCacheBoxes();
+    const rafId = requestAnimationFrame(() => {
+      measureAndCacheBoxes();
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [courses, activeTab, currentBg, isLightBg, userCreatedCourseIds, measureAndCacheBoxes]);
+
+  // Consumer for WebGL render loop: returns cached boxes without calling getBoundingClientRect()
+  const getBoxDescriptors = useCallback((): GlassBoxDescriptor[] => {
+    const curTop = containerRef.current ? containerRef.current.scrollTop : 0;
+    const curLeft = containerRef.current ? containerRef.current.scrollLeft : 0;
+    const curWinY = typeof window !== 'undefined' ? window.scrollY : 0;
+    const curWinX = typeof window !== 'undefined' ? window.scrollX : 0;
+
+    if (
+      isGeometryDirtyRef.current ||
+      cachedBoxesRef.current.length === 0 ||
+      curTop !== lastScrollTopRef.current ||
+      curLeft !== lastScrollLeftRef.current ||
+      curWinY !== lastWinScrollYRef.current ||
+      curWinX !== lastWinScrollXRef.current
+    ) {
+      measureAndCacheBoxes();
+    }
+
+    return cachedBoxesRef.current;
+  }, [measureAndCacheBoxes]);
+
+  // Theme toggle between White and Dark 3D orb scenes without altering shaders
+  const handleToggleTheme = useCallback(() => {
+    if (onSelectBg) {
+      onSelectBg(isLightBg ? DEEP_BLACK_ORBS_URL : STUDIO_WHITE_ORBS_URL);
+    }
+  }, [isLightBg, onSelectBg]);
+
+  // Return to Classic with complete modal cleanup
+  const handleReturnToClassic = useCallback(() => {
+    setIsPomodoroOpen(false);
+    setIsStudyHubOpen(false);
+    setIsOverviewOpen(false);
+    setIsAiModalOpen(false);
+    setSelectedCourse(null);
+    setIsAddCourseModalOpen(false);
+    setSettingsOpen(false);
+    setProfileOpen(false);
+    setActiveTab('home');
+    onReturnToClassic();
+  }, [onReturnToClassic]);
+
+  const handleSelectTab = useCallback(
+    (tab: DockTab) => {
+      setActiveTab(tab);
+      if (tab === 'home') {
+        // Return to the normal Studio dashboard
+        setSelectedCourse(null);
+        setIsOverviewOpen(false);
+        setIsAiModalOpen(false);
+        setIsPomodoroOpen(false);
+        setIsStudyHubOpen(false);
+        setIsAddCourseModalOpen(false);
+        setSettingsOpen(false);
+        setProfileOpen(false);
+        if (containerRef.current) {
+          containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } else if (tab === 'courses') {
+        // Close other overlays and open course details
+        setIsOverviewOpen(false);
+        setIsAiModalOpen(false);
+        setIsPomodoroOpen(false);
+        setIsStudyHubOpen(false);
+        setIsAddCourseModalOpen(false);
+        setSettingsOpen(false);
+        setProfileOpen(false);
+        setSelectedCourse(courses[0] || COURSES_DATA[0]);
+      } else if (tab === 'collections') {
+        // Close other overlays and open Overview
+        setSelectedCourse(null);
+        setIsAiModalOpen(false);
+        setIsPomodoroOpen(false);
+        setIsStudyHubOpen(false);
+        setIsAddCourseModalOpen(false);
+        setSettingsOpen(false);
+        setProfileOpen(false);
+        setIsOverviewOpen(true);
+      } else if (tab === 'notes') {
+        // Close other overlays and open Course Notes
+        setIsOverviewOpen(false);
+        setIsAiModalOpen(false);
+        setIsPomodoroOpen(false);
+        setIsStudyHubOpen(false);
+        setIsAddCourseModalOpen(false);
+        setSettingsOpen(false);
+        setProfileOpen(false);
+        setSelectedCourse(courses[0] || COURSES_DATA[0]);
+      } else if (tab === 'more') {
+        // Close other overlays and open AI Studio Assistant
+        setSelectedCourse(null);
+        setIsOverviewOpen(false);
+        setIsPomodoroOpen(false);
+        setIsStudyHubOpen(false);
+        setIsAddCourseModalOpen(false);
+        setSettingsOpen(false);
+        setProfileOpen(false);
+        setIsAiModalOpen(true);
+      }
+    },
+    [courses]
+  );
 
   // Glass card styles optimized for both dark and white backgrounds
   const glassCardStyle = {
@@ -256,10 +551,12 @@ export const StudioView: React.FC<StudioViewProps> = ({
           <StudioHeader
             performanceMode={performanceMode}
             onTogglePerformance={handleTogglePerformance}
-            onReturnToClassic={onReturnToClassic}
+            onReturnToClassic={handleReturnToClassic}
             onOpenSettings={() => setSettingsOpen(true)}
             onOpenProfile={() => setProfileOpen(true)}
             onOpenAiSparkle={() => setIsAiModalOpen(true)}
+            onToggleTheme={handleToggleTheme}
+            isDarkTheme={!isLightBg}
           />
         </div>
 
@@ -355,19 +652,19 @@ export const StudioView: React.FC<StudioViewProps> = ({
             >
               <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none rounded-t-[32px]" />
 
-              <div className="flex items-center gap-4.5">
+              <div className="flex items-center gap-4.5 min-w-0">
                 <div className="w-14 h-14 rounded-[22px] flex items-center justify-center bg-blue-500/20 border border-blue-400/30 text-blue-300 shadow-inner group-hover:bg-blue-500/30 transition-colors flex-shrink-0">
                   <BookOpen className="w-6 h-6" />
                 </div>
-                <div className="space-y-0.5">
-                  <h3 className="font-bold text-lg text-white tracking-tight group-hover:text-blue-200 transition-colors">
+                <div className="space-y-0.5 min-w-0 flex-1">
+                  <h3 className="font-bold text-lg text-white tracking-tight group-hover:text-blue-200 transition-colors truncate">
                     Study Hub
                   </h3>
-                  <p className="text-xs text-slate-300 font-medium">CS50 lectures & curriculum</p>
+                  <p className="text-xs text-slate-300 font-medium truncate">CS50 lectures & curriculum</p>
                 </div>
               </div>
 
-              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1.5 transition-all mr-1" />
+              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1.5 transition-all mr-1 shrink-0" />
             </div>
 
             {/* Action Card 2: Overview */}
@@ -380,19 +677,19 @@ export const StudioView: React.FC<StudioViewProps> = ({
             >
               <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none rounded-t-[32px]" />
 
-              <div className="flex items-center gap-4.5">
+              <div className="flex items-center gap-4.5 min-w-0">
                 <div className="w-14 h-14 rounded-[22px] flex items-center justify-center bg-purple-500/20 border border-purple-400/30 text-purple-300 shadow-inner group-hover:bg-purple-500/30 transition-colors flex-shrink-0">
                   <History className="w-6 h-6" />
                 </div>
-                <div className="space-y-0.5">
-                  <h3 className="font-bold text-lg text-white tracking-tight group-hover:text-purple-200 transition-colors">
+                <div className="space-y-0.5 min-w-0 flex-1">
+                  <h3 className="font-bold text-lg text-white tracking-tight group-hover:text-purple-200 transition-colors truncate">
                     Overview
                   </h3>
-                  <p className="text-xs text-slate-300 font-medium">All study tools and progress</p>
+                  <p className="text-xs text-slate-300 font-medium truncate">All study tools and progress</p>
                 </div>
               </div>
 
-              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1.5 transition-all mr-1" />
+              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1.5 transition-all mr-1 shrink-0" />
             </div>
 
             {/* Action Card 3: Pomodoro */}
@@ -405,19 +702,19 @@ export const StudioView: React.FC<StudioViewProps> = ({
             >
               <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none rounded-t-[32px]" />
 
-              <div className="flex items-center gap-4.5">
+              <div className="flex items-center gap-4.5 min-w-0">
                 <div className="w-14 h-14 rounded-[22px] flex items-center justify-center bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 shadow-inner group-hover:bg-cyan-500/30 transition-colors flex-shrink-0">
                   <Timer className="w-6 h-6" />
                 </div>
-                <div className="space-y-0.5">
-                  <h3 className="font-bold text-lg text-white tracking-tight group-hover:text-cyan-200 transition-colors">
+                <div className="space-y-0.5 min-w-0 flex-1">
+                  <h3 className="font-bold text-lg text-white tracking-tight group-hover:text-cyan-200 transition-colors truncate">
                     Pomodoro
                   </h3>
-                  <p className="text-xs text-slate-300 font-medium">Focus timer & intervals</p>
+                  <p className="text-xs text-slate-300 font-medium truncate">Focus timer & intervals</p>
                 </div>
               </div>
 
-              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1.5 transition-all mr-1" />
+              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1.5 transition-all mr-1 shrink-0" />
             </div>
           </div>
         </section>
@@ -576,7 +873,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
                 Target: 3.5h/day
               </span>
             </div>
-            <div className="grid grid-cols-7 gap-3 sm:gap-5 items-end h-36 pt-6">
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-3 md:gap-5 items-end h-36 pt-6">
               {[
                 { day: 'Mon', hours: 3.2, hPct: '65%' },
                 { day: 'Tue', hours: 4.5, hPct: '90%' },
@@ -714,25 +1011,25 @@ export const StudioView: React.FC<StudioViewProps> = ({
         <section
           ref={addNewCourseBarRef}
           id="workspace-add-course-bar"
-          className="relative rounded-[48px] sm:rounded-[60px] md:rounded-[68px] p-7 sm:p-9 md:p-11 lg:p-12 min-h-[140px] sm:min-h-[160px] flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-2xl transition-all duration-300"
+          className="relative rounded-[40px] sm:rounded-[60px] md:rounded-[68px] p-5 sm:p-9 md:p-11 lg:p-12 min-h-[120px] sm:min-h-[160px] flex flex-col sm:flex-row sm:items-center justify-between gap-5 sm:gap-6 shadow-2xl transition-all duration-300"
           style={glassCardStyle}
         >
           <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/45 to-transparent pointer-events-none rounded-t-[68px]" />
 
-          <div className="flex items-center gap-5 sm:gap-6">
-            <div className="p-4 sm:p-5 rounded-[28px] sm:rounded-[34px] bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow-inner flex-shrink-0">
-              <GraduationCap className="w-8 h-8 sm:w-9 sm:h-9" />
+          <div className="flex items-center gap-3.5 sm:gap-6 min-w-0">
+            <div className="p-3.5 sm:p-5 rounded-[22px] sm:rounded-[34px] bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow-inner flex-shrink-0">
+              <GraduationCap className="w-6 h-6 sm:w-9 sm:h-9" />
             </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] text-cyan-300">
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-cyan-300">
                   Course Catalog & Enrollments
                 </span>
-                <span className="px-3 py-0.5 rounded-full text-[11px] font-mono bg-white/10 text-slate-200 border border-white/15">
+                <span className="px-2.5 sm:px-3 py-0.5 rounded-full text-[10px] sm:text-[11px] font-mono bg-white/10 text-slate-200 border border-white/15">
                   {courses.length} courses active
                 </span>
               </div>
-              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+              <h3 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
                 Academic Modules & Study Folders
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
@@ -746,7 +1043,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
             <button
               onClick={() => setIsAddCourseModalOpen(true)}
               id="add-new-course-btn"
-              className="relative px-8 sm:px-11 py-4 sm:py-5 rounded-[28px] sm:rounded-[36px] text-sm sm:text-base font-extrabold tracking-wider text-white transition-all duration-200 flex items-center gap-3 cursor-pointer shadow-xl border border-white/30 hover:border-white/60 active:scale-95"
+              className="relative w-full sm:w-auto justify-center px-5 sm:px-8 md:px-11 py-3.5 sm:py-4 md:py-5 rounded-[24px] sm:rounded-[36px] text-xs sm:text-sm md:text-base font-extrabold tracking-wider text-white transition-all duration-200 flex items-center gap-2.5 sm:gap-3 cursor-pointer shadow-xl border border-white/30 hover:border-white/60 active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.82) 0%, rgba(6, 182, 212, 0.78) 100%)',
                 backdropFilter: 'blur(20px)',
@@ -755,12 +1052,12 @@ export const StudioView: React.FC<StudioViewProps> = ({
               }}
             >
               <div className="p-1.5 rounded-xl bg-white/20 text-white flex-shrink-0">
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <span className="uppercase whitespace-nowrap">
                 Add New Course
               </span>
-              <Sparkles className="w-4 h-4 text-cyan-200 flex-shrink-0" />
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-200 flex-shrink-0" />
             </button>
           </div>
         </section>
@@ -926,11 +1223,11 @@ export const StudioView: React.FC<StudioViewProps> = ({
             Fine-tune physical refraction angles, chromatic dispersion delta, rounded border bezels, and jittered depth blur live across all glass cards in your viewport.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 pt-2">
-            <label className="block space-y-3 p-6 md:p-7 rounded-[26px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all">
-              <div className="flex justify-between text-sm text-slate-200 font-semibold">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 pt-2">
+            <label className="block space-y-3 p-4 sm:p-6 md:p-7 rounded-[26px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all">
+              <div className="flex flex-wrap items-center justify-between gap-1 text-xs sm:text-sm text-slate-200 font-semibold">
                 <span>Index of Refraction (IOR / Snell’s Law)</span>
-                <span className="font-mono text-cyan-400 font-bold text-base">{ior.toFixed(2)}</span>
+                <span className="font-mono text-cyan-400 font-bold text-sm sm:text-base">{ior.toFixed(2)}</span>
               </div>
               <input
                 type="range"
@@ -946,10 +1243,10 @@ export const StudioView: React.FC<StudioViewProps> = ({
               </p>
             </label>
 
-            <label className="block space-y-3 p-6 md:p-7 rounded-[26px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all">
-              <div className="flex justify-between text-sm text-slate-200 font-semibold">
+            <label className="block space-y-3 p-4 sm:p-6 md:p-7 rounded-[26px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all">
+              <div className="flex flex-wrap items-center justify-between gap-1 text-xs sm:text-sm text-slate-200 font-semibold">
                 <span>Chromatic Dispersion Delta</span>
-                <span className="font-mono text-purple-400 font-bold text-base">{dispersion.toFixed(2)}</span>
+                <span className="font-mono text-purple-400 font-bold text-sm sm:text-base">{dispersion.toFixed(2)}</span>
               </div>
               <input
                 type="range"
@@ -965,10 +1262,10 @@ export const StudioView: React.FC<StudioViewProps> = ({
               </p>
             </label>
 
-            <label className="block space-y-3 p-6 md:p-7 rounded-[26px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all">
-              <div className="flex justify-between text-sm text-slate-200 font-semibold">
+            <label className="block space-y-3 p-4 sm:p-6 md:p-7 rounded-[26px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all">
+              <div className="flex flex-wrap items-center justify-between gap-1 text-xs sm:text-sm text-slate-200 font-semibold">
                 <span>Bezel Curvature Radius</span>
-                <span className="font-mono text-blue-400 font-bold text-base">{bezel.toFixed(0)}px</span>
+                <span className="font-mono text-blue-400 font-bold text-sm sm:text-base">{bezel.toFixed(0)}px</span>
               </div>
               <input
                 type="range"
@@ -984,10 +1281,10 @@ export const StudioView: React.FC<StudioViewProps> = ({
               </p>
             </label>
 
-            <label className="block space-y-3 p-6 md:p-7 rounded-[26px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all">
-              <div className="flex justify-between text-sm text-slate-200 font-semibold">
+            <label className="block space-y-3 p-4 sm:p-6 md:p-7 rounded-[26px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all">
+              <div className="flex flex-wrap items-center justify-between gap-1 text-xs sm:text-sm text-slate-200 font-semibold">
                 <span>Poisson Depth Blur</span>
-                <span className="font-mono text-emerald-400 font-bold text-base">{blur.toFixed(1)}px</span>
+                <span className="font-mono text-emerald-400 font-bold text-sm sm:text-base">{blur.toFixed(1)}px</span>
               </div>
               <input
                 type="range"
@@ -1011,7 +1308,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
         dockRef={dockRef}
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
-        onReturnToClassic={onReturnToClassic}
+        onReturnToClassic={handleReturnToClassic}
       />
 
       {/* 5. Interactive Modals */}
@@ -1031,6 +1328,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
         onClose={() => setIsOverviewOpen(false)}
         onOpenPomodoro={() => setIsPomodoroOpen(true)}
         onOpenStudyHub={() => setIsStudyHubOpen(true)}
+        courses={courses}
       />
 
       <CourseDetailModal
@@ -1053,7 +1351,13 @@ export const StudioView: React.FC<StudioViewProps> = ({
 
       {/* 6. Comprehensive Settings Modal with Background Showcase Gallery */}
       {settingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-xl animate-fade-in">
+        <div
+          id="settings-modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSettingsOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-xl animate-fade-in"
+        >
           <div
             className="w-full max-w-2xl p-8 sm:p-10 rounded-[36px] border border-white/20 text-white space-y-7 max-h-[88vh] overflow-y-auto shadow-2xl"
             style={{
@@ -1068,6 +1372,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
                 <p className="text-xs sm:text-sm text-slate-300/80">Configure WebGL background showcases and shader parameters</p>
               </div>
               <button
+                id="btn-close-settings"
                 onClick={() => setSettingsOpen(false)}
                 className="w-9 h-9 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer"
               >
@@ -1196,6 +1501,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
             </div>
 
             <button
+              id="btn-apply-settings"
               onClick={() => setSettingsOpen(false)}
               className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 font-bold text-sm tracking-wide cursor-pointer transition-all shadow-lg active:scale-98"
             >
@@ -1207,7 +1513,13 @@ export const StudioView: React.FC<StudioViewProps> = ({
 
       {/* 7. User Profile Modal */}
       {profileOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-xl animate-fade-in">
+        <div
+          id="profile-modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setProfileOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-xl animate-fade-in"
+        >
           <div
             className="w-full max-w-lg p-8 sm:p-9 rounded-[36px] border border-white/20 text-white space-y-7 shadow-2xl"
             style={{
@@ -1219,6 +1531,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
             <div className="flex items-center justify-between border-b border-white/15 pb-4">
               <h3 className="font-extrabold text-2xl text-white tracking-tight">User Account</h3>
               <button
+                id="btn-close-profile"
                 onClick={() => setProfileOpen(false)}
                 className="w-9 h-9 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer"
               >
@@ -1255,6 +1568,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
             </div>
 
             <button
+              id="btn-confirm-close-profile"
               onClick={() => setProfileOpen(false)}
               className="w-full py-3 rounded-2xl bg-white/10 hover:bg-white/15 font-bold text-xs sm:text-sm cursor-pointer transition-all active:scale-98"
             >

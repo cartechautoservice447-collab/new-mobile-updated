@@ -1,12 +1,14 @@
 import React from 'react';
 import { X, Flame, Award, Clock, BookOpen, BarChart2, CheckCircle2, TrendingUp } from 'lucide-react';
 import { COURSES_DATA } from '../../data/coursesData';
+import { CourseFolder } from '../../types/studio';
 
 interface OverviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenPomodoro?: () => void;
   onOpenStudyHub?: () => void;
+  courses?: CourseFolder[];
 }
 
 export const OverviewModal: React.FC<OverviewModalProps> = ({
@@ -14,13 +16,14 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
   onClose,
   onOpenPomodoro,
   onOpenStudyHub,
+  courses = COURSES_DATA,
 }) => {
   if (!isOpen) return null;
 
-  const totalNotes = COURSES_DATA.reduce((acc, c) => acc + c.noteCount, 0);
+  const totalNotes = courses.reduce((acc, c) => acc + c.noteCount, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-black/70 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 backdrop-blur-md animate-fade-in">
       <div
         className="relative w-full max-w-3xl rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden max-h-[90vh] flex flex-col"
         style={{
@@ -30,34 +33,36 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
         }}
       >
         {/* Top Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 bg-white/5">
-          <div className="flex items-center gap-3">
-            <span className="p-2.5 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 text-indigo-400">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-white/10 bg-white/5">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="p-2 sm:p-2.5 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 text-indigo-400 shrink-0">
               <BarChart2 className="w-5 h-5" />
             </span>
-            <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">Study Tools & Progress</h2>
-              <p className="text-xs text-slate-400">Holistic overview of your learning velocity</p>
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight truncate">Study Tools & Progress</h2>
+              <p className="text-xs text-slate-400 truncate">Holistic overview of your learning velocity</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors"
+            className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors shrink-0 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Scroll Content */}
-        <div className="p-6 space-y-6 overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-5 sm:space-y-6 overflow-y-auto">
           {/* Key Metric Highlights */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
               <div className="flex items-center gap-2 text-blue-400 text-xs font-semibold">
                 <BookOpen className="w-4 h-4" /> Total Notes
               </div>
               <p className="text-2xl font-bold text-white">{totalNotes}</p>
-              <p className="text-[11px] text-slate-400">Across 3 courses</p>
+              <p className="text-[11px] text-slate-400">
+                Across {courses.length} {courses.length === 1 ? 'course' : 'courses'}
+              </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
@@ -95,14 +100,14 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
             </div>
 
             <div className="space-y-3">
-              {COURSES_DATA.map((c) => (
+              {courses.map((c) => (
                 <div key={c.id} className="space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-medium text-white flex items-center gap-2">
-                      <span className="text-xs font-mono text-slate-400">{c.number}</span>
-                      {c.title}
+                  <div className="flex items-center justify-between text-xs gap-2">
+                    <span className="font-medium text-white flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-mono text-slate-400 shrink-0">{c.number}</span>
+                      <span className="truncate">{c.title}</span>
                     </span>
-                    <span className="text-slate-300 font-semibold">{c.progress}%</span>
+                    <span className="text-slate-300 font-semibold shrink-0">{c.progress}%</span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
                     <div

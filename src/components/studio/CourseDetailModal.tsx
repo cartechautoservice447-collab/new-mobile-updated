@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Folder, FileText, ChevronRight, Search, Copy, Check, Calendar, Clock, Tag } from 'lucide-react';
 import { CourseFolder, NoteItem } from '../../types/studio';
 
@@ -12,6 +12,16 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
   const [selectedNote, setSelectedNote] = useState<NoteItem | null>(course?.notes[0] || null);
   const [searchQuery, setSearchQuery] = useState('');
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Sync selected note when course changes
   React.useEffect(() => {
@@ -33,13 +43,20 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
     if (!code) return;
     navigator.clipboard.writeText(code);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/75 backdrop-blur-md animate-fade-in">
+    <div
+      id="course-detail-modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-8 bg-black/75 backdrop-blur-md animate-fade-in"
+    >
       <div
-        className="relative w-full max-w-5xl h-[88vh] flex flex-col rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden"
+        className="relative w-full max-w-5xl h-[90vh] md:h-[88vh] flex flex-col rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, rgba(17, 24, 43, 0.96) 0%, rgba(10, 15, 30, 0.98) 100%)',
           backdropFilter: 'blur(35px)',
@@ -47,10 +64,10 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
         }}
       >
         {/* Top Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10 bg-white/5">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <span
-              className="p-2.5 rounded-2xl border text-white font-mono font-bold text-sm"
+              className="p-2 sm:p-2.5 rounded-2xl border text-white font-mono font-bold text-xs sm:text-sm shrink-0"
               style={{
                 backgroundColor: `${course.color}25`,
                 borderColor: `${course.color}50`,
@@ -59,19 +76,19 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
             >
               {course.number}
             </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 text-slate-300">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 text-slate-300">
                   {course.code}
                 </span>
-                <span className="text-xs text-slate-400">Instructor: {course.instructor}</span>
+                <span className="text-[11px] sm:text-xs text-slate-400 truncate">Instructor: {course.instructor}</span>
               </div>
-              <h2 className="text-xl font-bold text-white tracking-tight">{course.title}</h2>
+              <h2 className="text-base sm:text-xl font-bold text-white tracking-tight truncate">{course.title}</h2>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors"
+            className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors shrink-0 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -80,7 +97,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
         {/* Modal Layout */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Notes Sidebar */}
-          <div className="w-full md:w-80 border-r border-white/10 flex flex-col bg-black/20">
+          <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-white/10 flex flex-col bg-black/20 max-h-44 md:max-h-none shrink-0">
             {/* Search */}
             <div className="p-3 border-b border-white/10">
               <div className="relative">
@@ -133,7 +150,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
           </div>
 
           {/* Note Reader Body */}
-          <div className="flex-1 flex flex-col overflow-y-auto p-6 md:p-8 space-y-6">
+          <div className="flex-1 flex flex-col overflow-y-auto p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
             {selectedNote ? (
               <>
                 {/* Note Meta Header */}

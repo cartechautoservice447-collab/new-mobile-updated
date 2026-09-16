@@ -184,7 +184,13 @@ export default function App() {
     if (mode !== 'webgl' || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    } catch (err) {
+      console.warn('App WebGL initialization failed:', err);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -205,12 +211,17 @@ export default function App() {
     bgScene.add(orbGroup);
     const orbMeshes: THREE.Mesh[] = [];
     
+    const orbGeometries: THREE.SphereGeometry[] = [];
+    const orbMaterials: THREE.MeshPhysicalMaterial[] = [];
+    
     const createOrb = (color: string, x: number, y: number, z: number, size: number) => {
       const geo = new THREE.SphereGeometry(size, 64, 64);
       const mat = new THREE.MeshPhysicalMaterial({ 
         color, emissive: color, emissiveIntensity: 0.5,
         roughness: 0.1, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.1
       });
+      orbGeometries.push(geo);
+      orbMaterials.push(mat);
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(x, y, z);
       orbGroup.add(mesh);
@@ -304,7 +315,8 @@ export default function App() {
       depthTest: false,
     });
 
-    scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material));
+    const fgPlaneGeo = new THREE.PlaneGeometry(2, 2);
+    scene.add(new THREE.Mesh(fgPlaneGeo, material));
 
     let animId = 0;
     const renderLoop = (time: number) => {
@@ -362,8 +374,16 @@ export default function App() {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
       renderTarget.dispose();
-      renderer.dispose();
+      wallGeo.dispose();
+      wallMat.dispose();
+      orbGeometries.forEach((g) => g.dispose());
+      orbMaterials.forEach((m) => m.dispose());
+      fgPlaneGeo.dispose();
       material.dispose();
+      if (threeRef.current?.bgTexture) {
+        threeRef.current.bgTexture.dispose();
+      }
+      renderer.dispose();
       threeRef.current = null;
     };
   }, [mode]);

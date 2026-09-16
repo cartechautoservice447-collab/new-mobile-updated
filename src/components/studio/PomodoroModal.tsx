@@ -135,6 +135,21 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({ isOpen, onClose })
     };
   }, [activeSound, isMuted, soundVolume, isOpen]);
 
+  // Responsive orb sizing
+  const [orbSize, setOrbSize] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < 380 ? 250 : typeof window !== 'undefined' && window.innerWidth < 480 ? 290 : 340
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 380) setOrbSize(250);
+      else if (window.innerWidth < 480) setOrbSize(290);
+      else setOrbSize(340);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   if (!isOpen) return null;
 
   const minutes = Math.floor(timeLeft / 60);
@@ -144,7 +159,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({ isOpen, onClose })
   const progressPercent = Math.round(fractionRemaining * 100);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 bg-black/75 backdrop-blur-xl overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 md:p-6 bg-black/75 backdrop-blur-xl overflow-y-auto">
       {/* 
         ENLARGED INTERFACE CONTAINER 
         Greatly increased width (max-w-5xl/6xl) and height (min-h-[700px] to 760px)
@@ -152,7 +167,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({ isOpen, onClose })
       */}
       <div
         id="pomodoro-liquid-glass-modal"
-        className="relative w-full max-w-5xl lg:max-w-6xl min-h-[680px] lg:min-h-[740px] max-h-[92vh] overflow-y-auto rounded-[44px] sm:rounded-[56px] md:rounded-[64px] p-6 sm:p-8 md:p-10 lg:p-12 text-white border shadow-2xl flex flex-col justify-between"
+        className="relative w-full max-w-5xl lg:max-w-6xl min-h-0 sm:min-h-[680px] lg:min-h-[740px] max-h-[92vh] overflow-y-auto rounded-[32px] sm:rounded-[56px] md:rounded-[64px] p-4 sm:p-8 md:p-10 lg:p-12 text-white border shadow-2xl flex flex-col justify-between"
         style={{
           background: 'linear-gradient(135deg, rgba(10, 16, 32, 0.9) 0%, rgba(6, 10, 22, 0.96) 100%)',
           backdropFilter: 'blur(40px)',
@@ -285,7 +300,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({ isOpen, onClose })
                 isRunning={isRunning}
                 fluidColorHex={activeTheme.fluidColor}
                 accentColorHex={activeTheme.accentColor}
-                size={340}
+                size={orbSize}
                 onOrbClick={() => setIsRunning(!isRunning)}
               />
 
