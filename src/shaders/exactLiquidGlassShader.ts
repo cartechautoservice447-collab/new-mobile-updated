@@ -237,8 +237,8 @@ void main() {
     color = mix(color, vec3(0.0), topShadowFalloff * uShadow * 0.65);
   }
 
-  // Specular highlight with animated light angle
-  vec2 lightDir = normalize(vec2(0.5 + sin(uTime * 0.6) * 0.15, -0.7 + cos(uTime * 0.5) * 0.1));
+  // Specular highlight with static light angle matching Main/Reference
+  vec2 lightDir = normalize(vec2(0.5, -0.7));
   float rimDot = abs(dot(grad, lightDir));
   float rimFalloff = 1.0 - smoothstep(0.0, bezel * 0.4, distFromEdge);
   float specHighlight = pow(rimDot * rimFalloff, 1.5);
