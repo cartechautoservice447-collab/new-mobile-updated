@@ -25,6 +25,7 @@ interface StudioWebGLBackgroundProps {
     spec?: number;
     tint?: number;
     shadow?: number;
+    dispersion?: number;
   };
   performanceMode?: PerformanceMode;
 }
@@ -40,6 +41,7 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
     spec: 0.55,
     tint: 0.08,
     shadow: 0.5,
+    dispersion: 1.9,
   },
   performanceMode = 'ultra',
 }) => {
@@ -240,6 +242,7 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
         uTime: { value: 0.0 },
         uThickness: { value: glParamsRef.current.thick ?? 50 },
         uIOR: { value: glParamsRef.current.ior ?? 3.0 },
+        uDispersion: { value: glParamsRef.current.dispersion ?? 1.9 },
         uBlur: { value: glParamsRef.current.blur ?? 1.5 },
         uSpecular: { value: glParamsRef.current.spec ?? 0.55 },
         uTint: { value: glParamsRef.current.tint ?? 0.08 },
@@ -328,6 +331,7 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
       const curParams = glParamsRef.current;
       threeRef.current.material.uniforms.uThickness.value = curParams.thick ?? 50;
       threeRef.current.material.uniforms.uIOR.value = curParams.ior ?? 3.0;
+      threeRef.current.material.uniforms.uDispersion.value = curParams.dispersion ?? 1.9;
       threeRef.current.material.uniforms.uBlur.value = curParams.blur ?? 1.5;
       threeRef.current.material.uniforms.uSpecular.value = curParams.spec ?? 0.55;
       threeRef.current.material.uniforms.uTint.value = curParams.tint ?? 0.08;

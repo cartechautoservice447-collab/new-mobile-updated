@@ -103,6 +103,7 @@ export interface StudioViewProps {
     spec?: number;
     tint?: number;
     shadow?: number;
+    dispersion?: number;
   };
   onReturnToClassic: () => void;
 }
@@ -177,7 +178,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
 
   // Optical tuning states for WebGL shader
   const [ior, setIor] = useState(glParams?.ior ?? 3.0);
-  const [dispersion, setDispersion] = useState(1.9);
+  const [dispersion, setDispersion] = useState(glParams?.dispersion ?? 1.9);
   const [bezel, setBezel] = useState(glParams?.bezel ?? 55);
   const [blur, setBlur] = useState(glParams?.blur ?? 1.5);
   const [specular, setSpecular] = useState(glParams?.spec ?? 0.55);
@@ -541,6 +542,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
           spec: specular,
           tint: glParams?.tint ?? 0.08,
           shadow: glParams?.shadow ?? 0.5,
+          dispersion: dispersion,
         }}
         performanceMode={performanceMode}
       />

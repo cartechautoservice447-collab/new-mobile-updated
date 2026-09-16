@@ -22,6 +22,7 @@ uniform float uTime;          // Animation time for liquid ripples and specular 
 
 uniform float uThickness;
 uniform float uIOR;
+uniform float uDispersion;
 uniform float uBlur;
 uniform float uSpecular;
 uniform float uTint;
@@ -216,8 +217,18 @@ void main() {
   vec2 screenUV = screenPx / uResolution;
   vec2 refractedUV = screenUV + offset;
 
-  // Sample blurred refracted background
-  vec3 color = sampleBgBlurred(refractedUV, uBlur);
+  // Physical chromatic dispersion (wavelength-dependent ray separation at curved boundaries)
+  vec2 dispDelta = (grad * displacement * (uDispersion * 0.012)) / uResolution;
+  vec2 uvR = refractedUV - dispDelta;
+  vec2 uvG = refractedUV;
+  vec2 uvB = refractedUV + dispDelta;
+
+  // Sample blurred refracted background with chromatic separation
+  vec3 color = vec3(
+    sampleBgBlurred(uvR, uBlur).r,
+    sampleBgBlurred(uvG, uBlur).g,
+    sampleBgBlurred(uvB, uBlur).b
+  );
 
   // If this pixel is inside a scrolling box that is underneath the shadow of the fixed top box,
   // cast the fixed top box shadow down onto the scrolling glass!
