@@ -272,7 +272,9 @@ export const StudioView: React.FC<StudioViewProps> = ({
     pushBoxById('pomodoro-modal-content', 64, 65);
     pushBoxById('study-hub-modal-content', 36, 55);
     pushBoxById('overview-modal-content', 36, 55);
-    pushBoxById('course-detail-modal-content', 36, 55);
+    pushBoxById('course-detail-modal-content', 48, 60);
+    pushBoxById('course-info-glass-card', 32, 45);
+    pushBoxById('course-progress-glass-panel', 28, 40);
     pushBoxById('add-course-modal-content', 64, 65);
     pushBoxById('ai-assistant-modal-content', 36, 55);
 

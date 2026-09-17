@@ -322,11 +322,9 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
       threeRef.current.material.uniforms.uRadii.value = threeRef.current.radiiArray;
       threeRef.current.material.uniforms.uBezels.value = threeRef.current.bezelsArray;
 
-      // Find index of the fixed horizontal glass dock or active modal to grant top-layer priority
-      const modalIdx = boxes.findIndex((b) => b.id.endsWith('-modal-content'));
+      // Find index of the fixed horizontal glass dock to grant top-layer priority and sheen animation
       const dockIdx = boxes.findIndex((b) => b.id === 'dock');
-      const topIdx = modalIdx >= 0 ? modalIdx : dockIdx;
-      threeRef.current.material.uniforms.uFixedTopBoxIdx.value = topIdx >= 0 && topIdx < count ? topIdx : -1;
+      threeRef.current.material.uniforms.uFixedTopBoxIdx.value = dockIdx >= 0 && dockIdx < count ? dockIdx : -1;
       threeRef.current.material.uniforms.uTime.value = time * 0.001;
 
       // Update optical uniforms if adjusted
