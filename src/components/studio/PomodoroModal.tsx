@@ -65,8 +65,6 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({ isOpen, onClose })
   // Exact liquid glass styling constant for uniform components
   const glassPanelStyle: React.CSSProperties = {
     background: 'rgba(15, 23, 42, 0.65)',
-    backdropFilter: 'blur(24px)',
-    WebkitBackdropFilter: 'blur(24px)',
     border: '1.5px solid rgba(255, 255, 255, 0.22)',
     boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.4)',
   };

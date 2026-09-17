@@ -302,9 +302,9 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
       }
 
       const boxes = getBoxesRef.current();
-      const count = Math.min(boxes.length, 16);
+      const count = Math.min(boxes.length, 24);
 
-      for (let i = 0; i < 16; i++) {
+      for (let i = 0; i < 24; i++) {
         if (i < count) {
           const b = boxes[i];
           threeRef.current.boxVectors[i].set(b.x, b.y, b.w, b.h);
@@ -322,9 +322,11 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
       threeRef.current.material.uniforms.uRadii.value = threeRef.current.radiiArray;
       threeRef.current.material.uniforms.uBezels.value = threeRef.current.bezelsArray;
 
-      // Find index of the fixed horizontal glass dock to grant top-layer priority and liquid animation
+      // Find index of the fixed horizontal glass dock or active modal to grant top-layer priority
+      const modalIdx = boxes.findIndex((b) => b.id.endsWith('-modal-content'));
       const dockIdx = boxes.findIndex((b) => b.id === 'dock');
-      threeRef.current.material.uniforms.uFixedTopBoxIdx.value = dockIdx >= 0 && dockIdx < count ? dockIdx : -1;
+      const topIdx = modalIdx >= 0 ? modalIdx : dockIdx;
+      threeRef.current.material.uniforms.uFixedTopBoxIdx.value = topIdx >= 0 && topIdx < count ? topIdx : -1;
       threeRef.current.material.uniforms.uTime.value = time * 0.001;
 
       // Update optical uniforms if adjusted

@@ -1031,7 +1031,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
         {/* GLASS VERTICAL GAP AFTER LECTURE NOTES TIMELINE */}
         <div className="flex flex-col items-center justify-center my-8 sm:my-10 pointer-events-none">
           <div className="w-[1px] h-10 sm:h-12 bg-gradient-to-b from-white/30 via-white/10 to-transparent" />
-          <div className="flex items-center gap-2.5 my-1.5 px-4 py-1.5 rounded-full backdrop-blur-md">
+          <div className="flex items-center gap-2.5 my-1.5 px-4 py-1.5 rounded-full bg-white/5 border border-white/10">
             <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
             <span className="text-[11px] font-mono text-slate-300 uppercase tracking-widest font-bold">
               Course Management Station
@@ -1389,8 +1389,8 @@ export const StudioView: React.FC<StudioViewProps> = ({
             id="settings-modal-content"
             className="w-full max-w-2xl p-8 sm:p-10 rounded-[36px] border border-white/20 text-white space-y-7 max-h-[88vh] overflow-y-auto shadow-2xl"
             style={{
-              background: 'linear-gradient(135deg, rgba(22, 25, 45, 0.96) 0%, rgba(12, 15, 30, 0.98) 100%)',
-              boxShadow: '0 30px 60px -15px rgba(0,0,0,0.8), inset 0 1px 1px 0 rgba(255,255,255,0.3)',
+              background: 'linear-gradient(135deg, rgba(22, 25, 45, 0.6) 0%, rgba(12, 15, 30, 0.72) 100%)',
+              boxShadow: '0 30px 60px -15px rgba(0,0,0,0.8), inset 0 1px 1.5px 0 rgba(255,255,255,0.35)',
             }}
           >
             <div className="flex items-center justify-between border-b border-white/15 pb-5">
@@ -1551,8 +1551,8 @@ export const StudioView: React.FC<StudioViewProps> = ({
             id="profile-modal-content"
             className="w-full max-w-lg p-8 sm:p-9 rounded-[36px] border border-white/20 text-white space-y-7 shadow-2xl"
             style={{
-              background: 'linear-gradient(135deg, rgba(25, 28, 48, 0.95) 0%, rgba(15, 18, 35, 0.98) 100%)',
-              boxShadow: '0 30px 60px -15px rgba(0,0,0,0.8), inset 0 1px 1px 0 rgba(255,255,255,0.3)',
+              background: 'linear-gradient(135deg, rgba(25, 28, 48, 0.6) 0%, rgba(15, 18, 35, 0.72) 100%)',
+              boxShadow: '0 30px 60px -15px rgba(0,0,0,0.8), inset 0 1px 1.5px 0 rgba(255,255,255,0.35)',
             }}
           >
             <div className="flex items-center justify-between border-b border-white/15 pb-4">
