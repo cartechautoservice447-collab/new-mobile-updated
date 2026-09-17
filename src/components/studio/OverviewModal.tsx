@@ -9,6 +9,7 @@ interface OverviewModalProps {
   onOpenPomodoro?: () => void;
   onOpenStudyHub?: () => void;
   courses?: CourseFolder[];
+  course?: CourseFolder | null;
 }
 
 export const OverviewModal: React.FC<OverviewModalProps> = ({
@@ -17,10 +18,12 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
   onOpenPomodoro,
   onOpenStudyHub,
   courses = COURSES_DATA,
+  course = null,
 }) => {
   if (!isOpen) return null;
 
-  const totalNotes = courses.reduce((acc, c) => acc + c.noteCount, 0);
+  const displayCourses = course ? [course] : courses;
+  const totalNotes = displayCourses.reduce((acc, c) => acc + (c.noteCount || c.notes?.length || 0), 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 animate-fade-in">
@@ -39,7 +42,9 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
               <BarChart2 className="w-5 h-5" />
             </span>
             <div className="min-w-0">
-              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight truncate">Study Tools & Progress</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight truncate">
+                {course ? `${course.title} Overview` : 'Study Tools & Progress'}
+              </h2>
               <p className="text-xs text-slate-400 truncate">Holistic overview of your learning velocity</p>
             </div>
           </div>
@@ -61,7 +66,7 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
               </div>
               <p className="text-2xl font-bold text-white">{totalNotes}</p>
               <p className="text-[11px] text-slate-400">
-                Across {courses.length} {courses.length === 1 ? 'course' : 'courses'}
+                Across {displayCourses.length} {displayCourses.length === 1 ? 'course' : 'courses'}
               </p>
             </div>
 
@@ -100,7 +105,7 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
             </div>
 
             <div className="space-y-3">
-              {courses.map((c) => (
+              {displayCourses.map((c) => (
                 <div key={c.id} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs gap-2">
                     <span className="font-medium text-white flex items-center gap-2 min-w-0">
@@ -137,8 +142,8 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
                 <div className="flex items-center gap-2 text-blue-300 text-xs font-semibold">
                   <BookOpen className="w-4 h-4" /> Study Hub
                 </div>
-                <p className="text-sm font-bold text-white">CS50 Video Lectures</p>
-                <p className="text-xs text-slate-400">9 recorded modules available</p>
+                <p className="text-sm font-bold text-white">Video Lectures</p>
+                <p className="text-xs text-slate-400">Recorded modules available</p>
               </div>
               <span className="px-3 py-1 text-xs rounded-xl bg-blue-500/20 text-blue-300 border border-blue-400/30">
                 Open →
@@ -173,15 +178,15 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2 text-emerald-300">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Complete CS50 Python Lecture 2 & Practice Problems</span>
+                <span>Complete {course ? course.title : 'Active Course'} Lecture & Practice Problems</span>
               </div>
               <div className="flex items-center gap-2 text-emerald-300">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Review Mobile Application Skia Shader architecture notes</span>
+                <span>Review Architecture notes</span>
               </div>
               <div className="flex items-center gap-2 text-slate-400">
                 <div className="w-4 h-4 rounded-full border border-slate-500" />
-                <span>Publish 2 technical summaries to Web Development & Three.js</span>
+                <span>Publish 2 technical summaries</span>
               </div>
             </div>
           </div>

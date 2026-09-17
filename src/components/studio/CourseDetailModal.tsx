@@ -22,10 +22,18 @@ interface CourseDetailModalProps {
   course: CourseFolder | null;
   isOpen: boolean;
   onClose: () => void;
+  onOpenPomodoro?: () => void;
+  onOpenOverview?: () => void;
 }
 
-export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, isOpen, onClose }) => {
-  const [activeView, setActiveView] = useState<'hub' | 'notes'>('hub');
+export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
+  course,
+  isOpen,
+  onClose,
+  onOpenPomodoro,
+  onOpenOverview,
+}) => {
+  const [activeView, setActiveView] = useState<'hub' | 'notes' | 'collections'>('hub');
   const [selectedNote, setSelectedNote] = useState<NoteItem | null>(course?.notes[0] || null);
   const [searchQuery, setSearchQuery] = useState('');
   const [copied, setCopied] = useState(false);
@@ -50,9 +58,18 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
     setShowHistory(false);
   }, [course, isOpen]);
 
+  // Notify Studio WebGL compositor whenever modal view, history, or note selection changes
+  useEffect(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, [activeView, showHistory, isOpen]);
+
   if (!isOpen || !course) return null;
 
-  const totalNotes = course.noteCount || course.notes.length || 13;
+  const totalNotes = course.noteCount || course.notes.length || 0;
+  const collectionsCount =
+    course.notes && course.notes.length > 0
+      ? new Set(course.notes.flatMap((n) => n.tags)).size || 3
+      : 1;
 
   const getAccentName = (color: string) => {
     const c = color.toLowerCase();
@@ -187,6 +204,30 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
                       <span className="font-semibold text-emerald-300 font-mono">{totalNotes} verified notes</span>
                     </div>
                   </div>
+
+                  {course.notes.length > 0 && (
+                    <div className="pt-2 border-t border-white/10">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        Recent Activity & Lecture History
+                      </p>
+                      <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                        {course.notes.slice(0, 4).map((n) => (
+                          <div
+                            key={n.id}
+                            onClick={() => {
+                              setSelectedNote(n);
+                              setActiveView('notes');
+                              setShowHistory(false);
+                            }}
+                            className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-xs cursor-pointer transition-all"
+                          >
+                            <span className="text-white font-medium truncate pr-2">{n.title}</span>
+                            <span className="text-[11px] text-slate-400 font-mono shrink-0">{n.lastEdited}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -264,7 +305,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
                 {/* Bottom Counts */}
                 <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
                   <span>{totalNotes} notes</span>
-                  <span>3 collections</span>
+                  <span>{collectionsCount} collections</span>
                 </div>
               </div>
 
@@ -285,24 +326,36 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* 01: Study Session */}
                 <div
-                  id="course-tool-study-session"
-                  onClick={() => setActiveView('notes')}
-                  className="p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] border border-white/15 hover:border-white/30 bg-white/[0.04] hover:bg-white/[0.08] transition-all cursor-pointer group shadow-lg flex flex-col justify-between min-h-[140px]"
+                  id="course-tool-01-glass-card"
+                  onClick={() => {
+                    if (onOpenPomodoro) {
+                      onOpenPomodoro();
+                    } else {
+                      setActiveView('notes');
+                    }
+                  }}
+                  className="relative overflow-hidden p-6 sm:p-7 rounded-[30px] sm:rounded-[36px] border border-white/20 hover:border-white/35 transition-all duration-300 cursor-pointer group shadow-xl flex flex-col justify-between min-h-[160px] sm:min-h-[175px]"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                    boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3)',
+                  }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="space-y-3">
-                      <span className="text-xs font-mono font-bold text-emerald-400">01</span>
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shadow-sm">
-                        <Play className="w-5 h-5 fill-emerald-400/20 text-emerald-300 ml-0.5" />
+                      <span className="text-xs sm:text-sm font-mono font-bold text-emerald-400 block tracking-wider">
+                        01
+                      </span>
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shadow-md">
+                        <Play className="w-5 h-5 fill-emerald-400/25 text-emerald-300 ml-0.5" />
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
                   </div>
                   <div className="mt-4">
-                    <h4 className="text-base sm:text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                    <h4 className="text-lg sm:text-xl font-extrabold text-white tracking-tight group-hover:text-emerald-300 transition-colors">
                       Study Session
                     </h4>
-                    <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-300/80 mt-1 leading-relaxed">
                       Start a focused study session for this course.
                     </p>
                   </div>
@@ -310,24 +363,32 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
 
                 {/* 02: Collections */}
                 <div
-                  id="course-tool-collections"
-                  onClick={() => setActiveView('notes')}
-                  className="p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] border border-white/15 hover:border-white/30 bg-white/[0.04] hover:bg-white/[0.08] transition-all cursor-pointer group shadow-lg flex flex-col justify-between min-h-[140px]"
+                  id="course-tool-02-glass-card"
+                  onClick={() => {
+                    setActiveView('collections');
+                  }}
+                  className="relative overflow-hidden p-6 sm:p-7 rounded-[30px] sm:rounded-[36px] border border-white/20 hover:border-white/35 transition-all duration-300 cursor-pointer group shadow-xl flex flex-col justify-between min-h-[160px] sm:min-h-[175px]"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                    boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3)',
+                  }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="space-y-3">
-                      <span className="text-xs font-mono font-bold text-cyan-400">02</span>
-                      <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shadow-sm">
-                        <Folder className="w-5 h-5 fill-cyan-400/20 text-cyan-300" />
+                      <span className="text-xs sm:text-sm font-mono font-bold text-cyan-400 block tracking-wider">
+                        02
+                      </span>
+                      <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shadow-md">
+                        <Folder className="w-5 h-5 fill-cyan-400/25 text-cyan-300" />
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
                   </div>
                   <div className="mt-4">
-                    <h4 className="text-base sm:text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
+                    <h4 className="text-lg sm:text-xl font-extrabold text-white tracking-tight group-hover:text-cyan-300 transition-colors">
                       Collections
                     </h4>
-                    <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-300/80 mt-1 leading-relaxed">
                       Organize notes into focused study groups.
                     </p>
                   </div>
@@ -335,24 +396,30 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
 
                 {/* 03: All Notes */}
                 <div
-                  id="course-tool-all-notes"
+                  id="course-tool-03-glass-card"
                   onClick={() => setActiveView('notes')}
-                  className="p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] border border-white/15 hover:border-white/30 bg-white/[0.04] hover:bg-white/[0.08] transition-all cursor-pointer group shadow-lg flex flex-col justify-between min-h-[140px]"
+                  className="relative overflow-hidden p-6 sm:p-7 rounded-[30px] sm:rounded-[36px] border border-white/20 hover:border-white/35 transition-all duration-300 cursor-pointer group shadow-xl flex flex-col justify-between min-h-[160px] sm:min-h-[175px]"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                    boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3)',
+                  }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="space-y-3">
-                      <span className="text-xs font-mono font-bold text-emerald-400">03</span>
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shadow-sm">
+                      <span className="text-xs sm:text-sm font-mono font-bold text-emerald-400 block tracking-wider">
+                        03
+                      </span>
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shadow-md">
                         <FileText className="w-5 h-5 text-emerald-300" />
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
                   </div>
                   <div className="mt-4">
-                    <h4 className="text-base sm:text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                    <h4 className="text-lg sm:text-xl font-extrabold text-white tracking-tight group-hover:text-emerald-300 transition-colors">
                       All Notes
                     </h4>
-                    <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-300/80 mt-1 leading-relaxed">
                       Open every note stored in this course.
                     </p>
                   </div>
@@ -360,24 +427,36 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
 
                 {/* 04: Course Overview */}
                 <div
-                  id="course-tool-overview"
-                  onClick={() => setActiveView('notes')}
-                  className="p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] border border-white/15 hover:border-white/30 bg-white/[0.04] hover:bg-white/[0.08] transition-all cursor-pointer group shadow-lg flex flex-col justify-between min-h-[140px]"
+                  id="course-tool-04-glass-card"
+                  onClick={() => {
+                    if (onOpenOverview) {
+                      onOpenOverview();
+                    } else {
+                      setShowHistory(true);
+                    }
+                  }}
+                  className="relative overflow-hidden p-6 sm:p-7 rounded-[30px] sm:rounded-[36px] border border-white/20 hover:border-white/35 transition-all duration-300 cursor-pointer group shadow-xl flex flex-col justify-between min-h-[160px] sm:min-h-[175px]"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                    boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3)',
+                  }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="space-y-3">
-                      <span className="text-xs font-mono font-bold text-cyan-400">04</span>
-                      <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shadow-sm">
+                      <span className="text-xs sm:text-sm font-mono font-bold text-cyan-400 block tracking-wider">
+                        04
+                      </span>
+                      <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shadow-md">
                         <BookOpen className="w-5 h-5 text-cyan-300" />
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
                   </div>
                   <div className="mt-4">
-                    <h4 className="text-base sm:text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
+                    <h4 className="text-lg sm:text-xl font-extrabold text-white tracking-tight group-hover:text-cyan-300 transition-colors">
                       Course Overview
                     </h4>
-                    <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-300/80 mt-1 leading-relaxed">
                       See this course progress, notes and activity.
                     </p>
                   </div>
@@ -385,6 +464,62 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
               </div>
             </div>
           </>
+        ) : activeView === 'collections' ? (
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+              <button
+                onClick={() => setActiveView('hub')}
+                className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/15 cursor-pointer transition-all active:scale-95"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Course Hub</span>
+              </button>
+              <span className="text-xs text-slate-400 font-mono">
+                {course.title} • {collectionsCount} collections
+              </span>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 rounded-2xl border border-white/10 bg-black/10">
+              <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight mb-6">
+                Course Collections
+              </h2>
+              {course.notes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                  <Folder className="w-12 h-12 stroke-1 text-slate-600 mb-2" />
+                  <p className="text-sm font-semibold text-slate-300">No collections yet</p>
+                  <p className="text-xs mt-1">Create notes with tags to build collections.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {Array.from(new Set(course.notes.flatMap((n) => n.tags))).map((tag, i) => {
+                    const notesInTag = course.notes.filter(n => n.tags.includes(tag));
+                    return (
+                      <div 
+                        key={i} 
+                        onClick={() => {
+                          setSearchQuery(tag);
+                          setActiveView('notes');
+                        }}
+                        className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan-400/30 cursor-pointer transition-all group"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300">
+                            <Folder className="w-5 h-5 fill-cyan-400/20" />
+                          </div>
+                          <span className="text-xs font-mono text-slate-400 bg-black/30 px-2 py-1 rounded-md">
+                            {notesInTag.length} {notesInTag.length === 1 ? 'note' : 'notes'}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                          {tag}
+                        </h3>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         ) : (
           /* Notes Reader View (Preserving Existing Functionality) */
           <div className="flex-1 flex flex-col h-full overflow-hidden">
@@ -420,27 +555,33 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
 
                 {/* Note list */}
                 <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                  {filteredNotes.map((note) => {
-                    const isSelected = selectedNote?.id === note.id;
-                    return (
-                      <button
-                        key={note.id}
-                        onClick={() => setSelectedNote(note)}
-                        className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-2.5 ${
-                          isSelected
-                            ? 'bg-blue-600/30 border border-blue-400/40 text-white'
-                            : 'hover:bg-white/5 border border-transparent text-slate-300'
-                        }`}
-                      >
-                        <FileText className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isSelected ? 'text-cyan-300' : 'text-slate-400'}`} />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-xs text-white truncate">{note.title}</p>
-                          <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5">{note.summary}</p>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-500 mt-1 flex-shrink-0" />
-                      </button>
-                    );
-                  })}
+                  {filteredNotes.length === 0 ? (
+                    <div className="p-4 text-center text-slate-400 text-xs">
+                      {course.notes.length === 0 ? 'No notes in this course yet.' : 'No notes matching search.'}
+                    </div>
+                  ) : (
+                    filteredNotes.map((note) => {
+                      const isSelected = selectedNote?.id === note.id;
+                      return (
+                        <button
+                          key={note.id}
+                          onClick={() => setSelectedNote(note)}
+                          className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-2.5 ${
+                            isSelected
+                              ? 'bg-blue-600/30 border border-blue-400/40 text-white'
+                              : 'hover:bg-white/5 border border-transparent text-slate-300'
+                          }`}
+                        >
+                          <FileText className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isSelected ? 'text-cyan-300' : 'text-slate-400'}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-xs text-white truncate">{note.title}</p>
+                            <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5">{note.summary}</p>
+                          </div>
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-500 mt-1 flex-shrink-0" />
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
@@ -501,9 +642,18 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
                     )}
                   </>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400">
                     <FileText className="w-12 h-12 stroke-1 text-slate-600 mb-2" />
-                    <p>Select a note from the left to read.</p>
+                    <p className="text-sm font-semibold text-slate-300">
+                      {course.notes.length === 0
+                        ? `No notes for ${course.title} yet`
+                        : 'Select a note from the list to read'}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1 max-w-xs">
+                      {course.notes.length === 0
+                        ? 'You can run study sessions or track your progress using Course tools.'
+                        : 'Review lecture summaries, source code snippets, and study tags.'}
+                    </p>
                   </div>
                 )}
               </div>

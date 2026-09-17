@@ -275,6 +275,10 @@ export const StudioView: React.FC<StudioViewProps> = ({
     pushBoxById('course-detail-modal-content', 48, 60);
     pushBoxById('course-info-glass-card', 32, 45);
     pushBoxById('course-progress-glass-panel', 28, 40);
+    pushBoxById('course-tool-01-glass-card', 28, 42);
+    pushBoxById('course-tool-02-glass-card', 28, 42);
+    pushBoxById('course-tool-03-glass-card', 28, 42);
+    pushBoxById('course-tool-04-glass-card', 28, 42);
     pushBoxById('add-course-modal-content', 64, 65);
     pushBoxById('ai-assistant-modal-content', 36, 55);
 
@@ -314,7 +318,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
     if (scrollContainer) {
       scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
     }
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
     window.addEventListener('resize', handleResize, { passive: true });
 
     // Observe size changes of tracked elements with ResizeObserver
@@ -350,7 +354,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
       if (scrollContainer) {
         scrollContainer.removeEventListener('scroll', handleScroll);
       }
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleScroll, { capture: true } as EventListenerOptions);
       window.removeEventListener('resize', handleResize);
       if (resizeObserver) {
         resizeObserver.disconnect();
@@ -1340,6 +1344,18 @@ export const StudioView: React.FC<StudioViewProps> = ({
         onReturnToClassic={handleReturnToClassic}
       />
 
+      <CourseDetailModal
+        course={selectedCourse}
+        isOpen={!!selectedCourse}
+        onClose={() => setSelectedCourse(null)}
+        onOpenPomodoro={() => {
+          setIsPomodoroOpen(true);
+        }}
+        onOpenOverview={() => {
+          setIsOverviewOpen(true);
+        }}
+      />
+
       {/* 5. Interactive Modals */}
       <PomodoroModal
         isOpen={isPomodoroOpen}
@@ -1358,12 +1374,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
         onOpenPomodoro={() => setIsPomodoroOpen(true)}
         onOpenStudyHub={() => setIsStudyHubOpen(true)}
         courses={courses}
-      />
-
-      <CourseDetailModal
         course={selectedCourse}
-        isOpen={!!selectedCourse}
-        onClose={() => setSelectedCourse(null)}
       />
 
       <AddCourseModal
