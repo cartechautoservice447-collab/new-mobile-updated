@@ -27,14 +27,19 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
     ? (course.noteCount || courseNotes.length || 0)
     : courses.reduce((acc, c) => acc + (c.noteCount || c.notes?.length || 0), 0);
 
-  const uniqueCourseTags = course ? new Set(courseNotes.flatMap((n) => n.tags)).size : 0;
+  const uniqueCourseTags = course ? new Set(courseNotes.flatMap((n) => n.tags || [])).size : 0;
   const totalEstMinutes = courseNotes.reduce((acc, n) => {
-    const mins = parseInt(n.readTime, 10) || 4;
+    const mins = parseInt(n.readTime || '4', 10) || 4;
     return acc + mins;
   }, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 animate-fade-in">
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 animate-fade-in"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div
         id="overview-modal-content"
         className="relative w-full max-w-3xl rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden max-h-[90vh] flex flex-col"
@@ -61,8 +66,10 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors shrink-0 cursor-pointer"
+            aria-label="Close overview"
           >
             <X className="w-5 h-5" />
           </button>
@@ -121,11 +128,11 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
               <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
                 <Award className="w-4 h-4" /> {course ? 'Instructor' : 'Mastery Level'}
               </div>
-              <p className="text-2xl font-bold text-white truncate">
-                {course ? (course.instructor ? course.instructor.split(' ')[0] + ' ' + (course.instructor.split(' ').slice(-1)[0] || '') : 'Faculty') : 'Advanced'}
+              <p className="text-xl sm:text-2xl font-bold text-white truncate" title={course?.instructor || undefined}>
+                {course ? (course.instructor || 'Faculty Staff') : 'Advanced'}
               </p>
               <p className="text-[11px] text-slate-400 truncate">
-                {course ? `Code: ${course.code}` : 'Top 5% cohort'}
+                {course ? `Code: ${course.code} #${course.number}` : 'Top 5% cohort'}
               </p>
             </div>
           </div>

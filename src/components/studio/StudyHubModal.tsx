@@ -114,21 +114,31 @@ export const StudyHubModal: React.FC<StudyHubModalProps> = ({ isOpen, onClose })
               {filteredLectures.map((lec) => {
                 const isSelected = selectedLecture.id === lec.id;
                 return (
-                  <button
+                  <div
                     key={lec.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedLecture(lec)}
-                    className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-3 ${
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedLecture(lec);
+                      }
+                    }}
+                    className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-3 cursor-pointer ${
                       isSelected
                         ? 'bg-blue-600/30 border border-blue-400/40 text-white'
                         : 'hover:bg-white/5 border border-transparent text-slate-300'
                     }`}
                   >
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleComplete(lec.id);
                       }}
-                      className="mt-0.5 text-slate-400 hover:text-emerald-400"
+                      className="mt-0.5 text-slate-400 hover:text-emerald-400 cursor-pointer"
+                      title={lec.completed ? 'Mark incomplete' : 'Mark complete'}
                     >
                       {lec.completed ? (
                         <CheckCircle className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
@@ -143,10 +153,10 @@ export const StudyHubModal: React.FC<StudyHubModalProps> = ({ isOpen, onClose })
                           <Clock className="w-3 h-3" /> {lec.duration}
                         </span>
                       </div>
-                      <p className="font-medium text-xs text-white truncate">{lec.title}</p>
+                      <h4 className="font-semibold text-xs text-white truncate">{lec.title}</h4>
                       <p className="text-[11px] text-slate-400 truncate">{lec.topic}</p>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>

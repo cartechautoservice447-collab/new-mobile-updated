@@ -710,7 +710,10 @@ export const StudioView: React.FC<StudioViewProps> = ({
             <div
               ref={toolCard2Ref}
               id="card-overview"
-              onClick={() => setIsOverviewOpen(true)}
+              onClick={() => {
+                setSelectedCourse(null);
+                setIsOverviewOpen(true);
+              }}
               className="group relative rounded-[32px] p-6 sm:p-7 flex items-center justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] shadow-xl"
               style={glassCardStyle}
             >
