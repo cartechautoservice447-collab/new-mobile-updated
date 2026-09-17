@@ -159,19 +159,17 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({ isOpen, onClose })
   const progressPercent = Math.round(fractionRemaining * 100);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 md:p-6 bg-black/75 backdrop-blur-xl overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 md:p-6 bg-black/75 overflow-y-auto">
       {/* 
         ENLARGED INTERFACE CONTAINER 
         Greatly increased width (max-w-5xl/6xl) and height (min-h-[700px] to 760px)
         Exact WebGL liquid glass curvature (rounded-[48px] to rounded-[64px])
       */}
       <div
-        id="pomodoro-liquid-glass-modal"
+        id="pomodoro-modal-content"
         className="relative w-full max-w-5xl lg:max-w-6xl min-h-0 sm:min-h-[680px] lg:min-h-[740px] max-h-[92vh] overflow-y-auto rounded-[32px] sm:rounded-[56px] md:rounded-[64px] p-4 sm:p-8 md:p-10 lg:p-12 text-white border shadow-2xl flex flex-col justify-between"
         style={{
           background: 'linear-gradient(135deg, rgba(10, 16, 32, 0.9) 0%, rgba(6, 10, 22, 0.96) 100%)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
           borderColor: 'rgba(255, 255, 255, 0.26)',
           boxShadow:
             '0 40px 95px -20px rgba(0, 0, 0, 0.85), 0 0 50px rgba(6, 182, 212, 0.15), inset 0 1.5px 2.5px 0 rgba(255, 255, 255, 0.5)',
@@ -361,8 +359,6 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({ isOpen, onClose })
                   background: isRunning
                     ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.85) 0%, rgba(220, 38, 38, 0.9) 100%)'
                     : `linear-gradient(135deg, ${activeTheme.fluidColor}dd 0%, ${activeTheme.accentColor}ee 100%)`,
-                  backdropFilter: 'blur(24px)',
-                  WebkitBackdropFilter: 'blur(24px)',
                   boxShadow: `0 15px 35px -5px ${
                     isRunning ? 'rgba(239, 68, 68, 0.45)' : activeTheme.fluidColor + '66'
                   }, inset 0 1.5px 2px rgba(255, 255, 255, 0.6)`,

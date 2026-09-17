@@ -61,14 +61,13 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 animate-fade-in"
     >
       <div
+        id="ai-assistant-modal-content"
         className="relative w-full max-w-2xl rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden flex flex-col h-[85vh] sm:h-[75vh]"
         style={{
           background: 'linear-gradient(135deg, rgba(25, 20, 50, 0.95) 0%, rgba(12, 16, 32, 0.98) 100%)',
-          backdropFilter: 'blur(35px)',
-          WebkitBackdropFilter: 'blur(35px)',
         }}
       >
         {/* Header */}

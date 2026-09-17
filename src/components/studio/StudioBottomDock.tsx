@@ -21,7 +21,7 @@ export const StudioBottomDock: React.FC<StudioBottomDockProps> = ({
       ref={dockRef}
       id="studio-bottom-dock"
       aria-label="Studio Navigation Dock"
-      className="fixed bottom-3 sm:bottom-8 left-1/2 -translate-x-1/2 z-40 select-none flex items-center justify-between sm:justify-center gap-0.5 sm:gap-4 p-2 sm:p-3 sm:px-8 rounded-[32px] sm:rounded-[40px] shadow-2xl transition-all duration-300 pointer-events-auto backdrop-blur-2xl w-[calc(100vw-16px)] sm:w-max max-w-[980px] no-scrollbar"
+      className="fixed bottom-3 sm:bottom-8 left-1/2 -translate-x-1/2 z-40 select-none flex items-center justify-between sm:justify-center gap-0.5 sm:gap-4 p-2 sm:p-3 sm:px-8 rounded-[32px] sm:rounded-[40px] shadow-2xl transition-all duration-300 pointer-events-auto w-[calc(100vw-16px)] sm:w-max max-w-[980px] no-scrollbar"
       style={{
         background: 'rgba(10, 16, 32, 0.68)',
         border: '1.5px solid rgba(255, 255, 255, 0.26)',

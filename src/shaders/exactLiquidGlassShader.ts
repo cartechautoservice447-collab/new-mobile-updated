@@ -10,7 +10,7 @@ export const exactStudioFragmentShader = `
 precision highp float;
 varying vec2 vUv;
 
-#define MAX_BOXES 16
+#define MAX_BOXES 24
 
 uniform vec2 uResolution;
 uniform vec4 uBoxes[MAX_BOXES]; // xy = center in screen px (top-left origin), zw = width & height

@@ -23,13 +23,12 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
   const totalNotes = courses.reduce((acc, c) => acc + c.noteCount, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 animate-fade-in">
       <div
+        id="overview-modal-content"
         className="relative w-full max-w-3xl rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden max-h-[90vh] flex flex-col"
         style={{
           background: 'linear-gradient(135deg, rgba(20, 24, 45, 0.95) 0%, rgba(13, 17, 35, 0.98) 100%)',
-          backdropFilter: 'blur(30px)',
-          WebkitBackdropFilter: 'blur(30px)',
         }}
       >
         {/* Top Header */}

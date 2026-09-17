@@ -55,14 +55,13 @@ export const StudyHubModal: React.FC<StudyHubModalProps> = ({ isOpen, onClose })
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-8 bg-black/70 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-8 bg-black/70 animate-fade-in"
     >
       <div
+        id="study-hub-modal-content"
         className="relative w-full max-w-5xl h-[90vh] md:h-[88vh] flex flex-col rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
         }}
       >
         {/* Top Header */}

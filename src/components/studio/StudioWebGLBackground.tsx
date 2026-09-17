@@ -221,9 +221,9 @@ export const StudioWebGLBackground: React.FC<StudioWebGLBackgroundProps> = ({
     const fgScene = new THREE.Scene();
     const fgCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    const boxVectors = Array.from({ length: 16 }, () => new THREE.Vector4());
-    const radiiArray = new Float32Array(16);
-    const bezelsArray = new Float32Array(16);
+    const boxVectors = Array.from({ length: 24 }, () => new THREE.Vector4());
+    const radiiArray = new Float32Array(24);
+    const bezelsArray = new Float32Array(24);
 
     const isCurrentOrb = isOrbScene(currentBgRef.current);
 

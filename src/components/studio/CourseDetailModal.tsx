@@ -53,14 +53,13 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-8 bg-black/75 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-8 bg-black/75 animate-fade-in"
     >
       <div
+        id="course-detail-modal-content"
         className="relative w-full max-w-5xl h-[90vh] md:h-[88vh] flex flex-col rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, rgba(17, 24, 43, 0.96) 0%, rgba(10, 15, 30, 0.98) 100%)',
-          backdropFilter: 'blur(35px)',
-          WebkitBackdropFilter: 'blur(35px)',
         }}
       >
         {/* Top Header */}

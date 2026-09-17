@@ -248,6 +248,11 @@ export const StudioView: React.FC<StudioViewProps> = ({
       });
     };
 
+    const pushBoxById = (id: string, r: number, bezelRadius: number = 45) => {
+      const el = document.getElementById(id);
+      if (el) pushBox(id, el, r, bezelRadius);
+    };
+
     pushBox('banner', bannerRef.current, 36, 55);
     pushBox('showcase', showcaseBarRef.current, 44, 55);
     pushBox('tool1', toolCard1Ref.current, 36, 45);
@@ -260,6 +265,16 @@ export const StudioView: React.FC<StudioViewProps> = ({
     pushBox('created-courses-section', createdCoursesSectionRef.current, 52, 70);
     pushBox('optics', opticsCardRef.current, 38, 55);
     pushBox('dock', dockRef.current, 56, 65);
+
+    // Register active Modals as Liquid Glass surfaces
+    pushBoxById('settings-modal-content', 36, 55);
+    pushBoxById('profile-modal-content', 36, 55);
+    pushBoxById('pomodoro-modal-content', 64, 65);
+    pushBoxById('study-hub-modal-content', 36, 55);
+    pushBoxById('overview-modal-content', 36, 55);
+    pushBoxById('course-detail-modal-content', 36, 55);
+    pushBoxById('add-course-modal-content', 64, 65);
+    pushBoxById('ai-assistant-modal-content', 36, 55);
 
     cachedBoxesRef.current = list;
     isGeometryDirtyRef.current = false;
@@ -385,7 +400,22 @@ export const StudioView: React.FC<StudioViewProps> = ({
       measureAndCacheBoxes();
     });
     return () => cancelAnimationFrame(rafId);
-  }, [courses, activeTab, currentBg, isLightBg, userCreatedCourseIds, measureAndCacheBoxes]);
+  }, [
+    courses,
+    activeTab,
+    currentBg,
+    isLightBg,
+    userCreatedCourseIds,
+    isPomodoroOpen,
+    isStudyHubOpen,
+    isOverviewOpen,
+    isAiModalOpen,
+    isAddCourseModalOpen,
+    settingsOpen,
+    profileOpen,
+    selectedCourse,
+    measureAndCacheBoxes
+  ]);
 
   // Consumer for WebGL render loop: returns cached boxes without calling getBoundingClientRect()
   const getBoxDescriptors = useCallback((): GlassBoxDescriptor[] => {
@@ -584,7 +614,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
           <div
             ref={showcaseBarRef}
             id="liquid-glass-showcase-bar"
-            className="rounded-[44px] sm:rounded-[52px] p-4 sm:p-5 md:p-6 flex flex-wrap items-center justify-between gap-4 shadow-2xl transition-all backdrop-blur-md"
+            className="rounded-[44px] sm:rounded-[52px] p-4 sm:p-5 md:p-6 flex flex-wrap items-center justify-between gap-4 shadow-2xl transition-all"
             style={glassCardStyle}
           >
             <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
@@ -1049,8 +1079,6 @@ export const StudioView: React.FC<StudioViewProps> = ({
               className="relative w-full sm:w-auto justify-center px-5 sm:px-8 md:px-11 py-3.5 sm:py-4 md:py-5 rounded-[24px] sm:rounded-[36px] text-xs sm:text-sm md:text-base font-extrabold tracking-wider text-white transition-all duration-200 flex items-center gap-2.5 sm:gap-3 cursor-pointer shadow-xl border border-white/30 hover:border-white/60 active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.82) 0%, rgba(6, 182, 212, 0.78) 100%)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
                 boxShadow: '0 12px 30px -6px rgba(6, 182, 212, 0.45), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.5)',
               }}
             >
@@ -1111,10 +1139,6 @@ export const StudioView: React.FC<StudioViewProps> = ({
                       ? 'bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-white/5 border-cyan-400/40 shadow-[0_12px_35px_rgba(6,182,212,0.25)] ring-1 ring-cyan-400/30'
                       : 'bg-white/5 border-white/10 hover:border-white/25 hover:bg-white/[0.08]'
                   }`}
-                  style={{
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
-                  }}
                 >
                   {isNewlyCreated && (
                     <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-400/25 border border-cyan-300/50 text-[10px] font-bold text-cyan-100 uppercase tracking-wider shadow-sm">
@@ -1359,13 +1383,13 @@ export const StudioView: React.FC<StudioViewProps> = ({
           onClick={(e) => {
             if (e.target === e.currentTarget) setSettingsOpen(false);
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-xl animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 animate-fade-in"
         >
           <div
+            id="settings-modal-content"
             className="w-full max-w-2xl p-8 sm:p-10 rounded-[36px] border border-white/20 text-white space-y-7 max-h-[88vh] overflow-y-auto shadow-2xl"
             style={{
               background: 'linear-gradient(135deg, rgba(22, 25, 45, 0.96) 0%, rgba(12, 15, 30, 0.98) 100%)',
-              backdropFilter: 'blur(40px)',
               boxShadow: '0 30px 60px -15px rgba(0,0,0,0.8), inset 0 1px 1px 0 rgba(255,255,255,0.3)',
             }}
           >
@@ -1521,13 +1545,13 @@ export const StudioView: React.FC<StudioViewProps> = ({
           onClick={(e) => {
             if (e.target === e.currentTarget) setProfileOpen(false);
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-xl animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 animate-fade-in"
         >
           <div
+            id="profile-modal-content"
             className="w-full max-w-lg p-8 sm:p-9 rounded-[36px] border border-white/20 text-white space-y-7 shadow-2xl"
             style={{
               background: 'linear-gradient(135deg, rgba(25, 28, 48, 0.95) 0%, rgba(15, 18, 35, 0.98) 100%)',
-              backdropFilter: 'blur(40px)',
               boxShadow: '0 30px 60px -15px rgba(0,0,0,0.8), inset 0 1px 1px 0 rgba(255,255,255,0.3)',
             }}
           >
