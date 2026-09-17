@@ -67,7 +67,8 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
         id="ai-assistant-modal-content"
         className="relative w-full max-w-2xl rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden flex flex-col h-[85vh] sm:h-[75vh]"
         style={{
-          background: 'linear-gradient(135deg, rgba(25, 20, 50, 0.95) 0%, rgba(12, 16, 32, 0.98) 100%)',
+          background: 'linear-gradient(135deg, rgba(25, 20, 50, 0.55) 0%, rgba(12, 16, 32, 0.7) 100%)',
+          boxShadow: '0 35px 70px -15px rgba(0, 0, 0, 0.8), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.35)',
         }}
       >
         {/* Header */}

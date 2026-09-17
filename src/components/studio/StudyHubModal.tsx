@@ -61,7 +61,8 @@ export const StudyHubModal: React.FC<StudyHubModalProps> = ({ isOpen, onClose })
         id="study-hub-modal-content"
         className="relative w-full max-w-5xl h-[90vh] md:h-[88vh] flex flex-col rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+          background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.55) 0%, rgba(15, 23, 42, 0.7) 100%)',
+          boxShadow: '0 35px 70px -15px rgba(0, 0, 0, 0.8), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.35)',
         }}
       >
         {/* Top Header */}

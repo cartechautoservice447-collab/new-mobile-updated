@@ -115,8 +115,8 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
             className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] sm:rounded-[56px] md:rounded-[64px] p-5 sm:p-8 md:p-12 shadow-2xl text-white border border-white/20 z-10"
             style={{
               background: isLightBg
-                ? 'linear-gradient(135deg, rgba(20, 25, 45, 0.95) 0%, rgba(12, 16, 32, 0.98) 100%)'
-                : 'linear-gradient(135deg, rgba(25, 30, 50, 0.85) 0%, rgba(10, 14, 28, 0.92) 100%)',
+                ? 'linear-gradient(135deg, rgba(20, 25, 45, 0.55) 0%, rgba(12, 16, 32, 0.7) 100%)'
+                : 'linear-gradient(135deg, rgba(25, 30, 50, 0.55) 0%, rgba(10, 14, 28, 0.7) 100%)',
               boxShadow: '0 35px 70px -12px rgba(0, 0, 0, 0.75), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.4)',
             }}
           >

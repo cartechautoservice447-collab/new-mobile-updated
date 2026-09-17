@@ -59,7 +59,8 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, is
         id="course-detail-modal-content"
         className="relative w-full max-w-5xl h-[90vh] md:h-[88vh] flex flex-col rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, rgba(17, 24, 43, 0.96) 0%, rgba(10, 15, 30, 0.98) 100%)',
+          background: 'linear-gradient(135deg, rgba(17, 24, 43, 0.55) 0%, rgba(10, 15, 30, 0.7) 100%)',
+          boxShadow: '0 35px 70px -15px rgba(0, 0, 0, 0.8), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.35)',
         }}
       >
         {/* Top Header */}

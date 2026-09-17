@@ -28,7 +28,8 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
         id="overview-modal-content"
         className="relative w-full max-w-3xl rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden max-h-[90vh] flex flex-col"
         style={{
-          background: 'linear-gradient(135deg, rgba(20, 24, 45, 0.95) 0%, rgba(13, 17, 35, 0.98) 100%)',
+          background: 'linear-gradient(135deg, rgba(20, 24, 45, 0.55) 0%, rgba(13, 17, 35, 0.7) 100%)',
+          boxShadow: '0 35px 70px -15px rgba(0, 0, 0, 0.8), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.35)',
         }}
       >
         {/* Top Header */}

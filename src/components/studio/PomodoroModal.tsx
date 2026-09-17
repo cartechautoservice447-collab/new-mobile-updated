@@ -167,7 +167,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({ isOpen, onClose })
         id="pomodoro-modal-content"
         className="relative w-full max-w-5xl lg:max-w-6xl min-h-0 sm:min-h-[680px] lg:min-h-[740px] max-h-[92vh] overflow-y-auto rounded-[32px] sm:rounded-[56px] md:rounded-[64px] p-4 sm:p-8 md:p-10 lg:p-12 text-white border shadow-2xl flex flex-col justify-between"
         style={{
-          background: 'linear-gradient(135deg, rgba(10, 16, 32, 0.9) 0%, rgba(6, 10, 22, 0.96) 100%)',
+          background: 'linear-gradient(135deg, rgba(10, 16, 32, 0.6) 0%, rgba(6, 10, 22, 0.72) 100%)',
           borderColor: 'rgba(255, 255, 255, 0.26)',
           boxShadow:
             '0 40px 95px -20px rgba(0, 0, 0, 0.85), 0 0 50px rgba(6, 182, 212, 0.15), inset 0 1.5px 2.5px 0 rgba(255, 255, 255, 0.5)',
@@ -306,7 +306,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({ isOpen, onClose })
                   {formattedTime}
                 </span>
 
-                <div className="mt-2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/20 backdrop-blur-md">
+                <div className="mt-2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/20">
                   <span
                     className="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]"
                     style={{ backgroundColor: activeTheme.fluidColor, color: activeTheme.fluidColor }}
