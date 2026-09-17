@@ -91,6 +91,7 @@ void main() {
   vec2 screenPx = vec2(vUv.x, 1.0 - vUv.y) * uResolution;
 
   float minSd = 1e6;
+  float maxInsideSd = -1e6;
   int activeBoxIdx = -1;
   vec2 activeCenter = vec2(0.0);
   vec2 activeHalfSize = vec2(0.0);
@@ -141,13 +142,18 @@ void main() {
       totalShadow += uShadow * shadowFalloff * 0.55;
     }
 
-    if (sd < minSd) {
+    if (sd <= 0.0) {
+      if (activeBoxIdx == -1 || maxInsideSd < sd) {
+        maxInsideSd = sd;
+        minSd = sd;
+        activeBoxIdx = i;
+        activeCenter = center;
+        activeHalfSize = halfSize;
+        activeRadius = r;
+        activeBezel = b;
+      }
+    } else if (activeBoxIdx == -1 && sd < minSd) {
       minSd = sd;
-      activeBoxIdx = i;
-      activeCenter = center;
-      activeHalfSize = halfSize;
-      activeRadius = r;
-      activeBezel = b;
     }
   }
 
