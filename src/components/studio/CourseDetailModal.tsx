@@ -126,15 +126,14 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 bg-black/75 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 bg-transparent animate-fade-in"
     >
       {/* 1. Large Outer Rounded WebGL Glass Shell */}
       <div
         id="course-detail-modal-content"
         className="relative w-full max-w-6xl xl:max-w-7xl min-h-[660px] lg:min-h-[740px] max-h-[92vh] overflow-y-auto rounded-[36px] sm:rounded-[48px] md:rounded-[56px] p-5 sm:p-8 md:p-10 lg:p-12 text-white border border-white/20 shadow-2xl flex flex-col justify-between"
         style={{
-          background: 'linear-gradient(135deg, rgba(15, 20, 42, 0.55) 0%, rgba(10, 14, 28, 0.7) 100%)',
-          boxShadow: '0 40px 95px -20px rgba(0, 0, 0, 0.85), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.35)',
+          boxShadow: '0 40px 95px -20px rgba(0, 0, 0, 0.85), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.35), 0 0 0 9999px rgba(0, 0, 0, 0.75)',
         }}
       >
         {/* Top Gloss Highlight Line */}
@@ -236,7 +235,6 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                 id="course-info-glass-card"
                 className="relative w-full rounded-[28px] sm:rounded-[36px] p-5 sm:p-6 md:px-8 md:py-6 border border-white/20 flex items-center justify-between gap-4 transition-all"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
                   boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.35)',
                 }}
               >
@@ -280,7 +278,6 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                 id="course-progress-glass-panel"
                 className="relative w-full rounded-[24px] sm:rounded-[30px] p-5 sm:p-6 md:px-8 md:py-5 border border-white/20 mt-5 sm:mt-6 transition-all"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%)',
                   boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.25)',
                 }}
               >
@@ -336,7 +333,6 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                   }}
                   className="relative overflow-hidden p-6 sm:p-7 rounded-[30px] sm:rounded-[36px] border border-white/20 hover:border-white/35 transition-all duration-300 cursor-pointer group shadow-xl flex flex-col justify-between min-h-[160px] sm:min-h-[175px]"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%)',
                     boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3)',
                   }}
                 >
@@ -369,7 +365,6 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                   }}
                   className="relative overflow-hidden p-6 sm:p-7 rounded-[30px] sm:rounded-[36px] border border-white/20 hover:border-white/35 transition-all duration-300 cursor-pointer group shadow-xl flex flex-col justify-between min-h-[160px] sm:min-h-[175px]"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%)',
                     boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3)',
                   }}
                 >
@@ -400,7 +395,6 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                   onClick={() => setActiveView('notes')}
                   className="relative overflow-hidden p-6 sm:p-7 rounded-[30px] sm:rounded-[36px] border border-white/20 hover:border-white/35 transition-all duration-300 cursor-pointer group shadow-xl flex flex-col justify-between min-h-[160px] sm:min-h-[175px]"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%)',
                     boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3)',
                   }}
                 >
@@ -437,7 +431,6 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                   }}
                   className="relative overflow-hidden p-6 sm:p-7 rounded-[30px] sm:rounded-[36px] border border-white/20 hover:border-white/35 transition-all duration-300 cursor-pointer group shadow-xl flex flex-col justify-between min-h-[160px] sm:min-h-[175px]"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%)',
                     boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3)',
                   }}
                 >

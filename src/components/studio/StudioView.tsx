@@ -342,6 +342,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
         createdCoursesSectionRef.current,
         opticsCardRef.current,
         dockRef.current,
+        document.getElementById('course-detail-modal-content'),
       ];
 
       elementsToObserve.forEach((el) => {

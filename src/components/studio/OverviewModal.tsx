@@ -29,7 +29,7 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
 
   const uniqueCourseTags = course ? new Set(courseNotes.flatMap((n) => n.tags || [])).size : 0;
   const totalEstMinutes = courseNotes.reduce((acc, n) => {
-    const mins = parseInt(n.readTime || '4', 10) || 4;
+    const mins = parseInt(n.readTime || '0', 10) || 0;
     return acc + mins;
   }, 0);
 
@@ -117,10 +117,14 @@ export const OverviewModal: React.FC<OverviewModalProps> = ({
                 <Clock className="w-4 h-4" /> {course ? 'Est. Reading' : 'Study Hours'}
               </div>
               <p className="text-2xl font-bold text-white">
-                {course ? (totalEstMinutes > 0 ? `${totalEstMinutes} mins` : '15 mins') : '34.5 hrs'}
+                {course ? (totalEstMinutes > 0 ? `${totalEstMinutes} mins` : '—') : '34.5 hrs'}
               </p>
               <p className="text-[11px] text-slate-400 truncate">
-                {course ? `Across ${courseNotes.length || 1} lecture topics` : 'This month'}
+                {course
+                  ? totalEstMinutes > 0
+                    ? `Across ${courseNotes.length} lecture topics`
+                    : 'No reading-time data'
+                  : 'This month'}
               </p>
             </div>
 
